@@ -28,6 +28,12 @@ typedef struct {
 
 int sh7750_register_io_device(struct SH7750State *s,
 			      sh7750_io_device * device);
+
+/* sh7262.c */
+struct SH7262State;
+
+struct SH7262State *sh7262_init(SuperHCPU *cpu, struct MemoryRegion *sysmem);
+
 /* sh_timer.c */
 #define TMU012_FEAT_TOCR   (1 << 0)
 #define TMU012_FEAT_3CHAN  (1 << 1)

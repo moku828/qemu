@@ -1,5 +1,5 @@
 /*
- * FRK-SH2A board description
+ * SH7262 device
  *
  * Copyright (c) 2018 Masayuki Okumura
  *
@@ -22,37 +22,22 @@
  * THE SOFTWARE.
  */
 #include "qemu/osdep.h"
-#include "qapi/error.h"
-#include "qemu-common.h"
-#include "cpu.h"
 #include "hw/hw.h"
 #include "hw/sh4/sh.h"
 #include "sysemu/sysemu.h"
-#include "sysemu/qtest.h"
-#include "hw/boards.h"
-#include "hw/loader.h"
-#include "exec/address-spaces.h"
-#include "qemu/error-report.h"
+#include "cpu.h"
+#include "exec/exec-all.h"
 
-static void frksh2a_init(MachineState *machine)
-{
+typedef struct SH7262State {
+    /* CPU */
     SuperHCPU *cpu;
-    struct SH7262State *s;
-    MemoryRegion *sysmem = get_system_memory();
-    
-    cpu = SUPERH_CPU(cpu_create(machine->cpu_type));
+} SH7262State;
 
-    s = sh7262_init(cpu, sysmem);
-
-    exit(0);
-}
-
-static void frksh2a_machine_init(MachineClass *mc)
+SH7262State *sh7262_init(SuperHCPU *cpu, MemoryRegion *sysmem)
 {
-    mc->desc = "FRK-SH2A";
-    mc->init = frksh2a_init;
-    mc->is_default = 1;
-    mc->default_cpu_type = TYPE_SH7262_CPU;
-}
+    SH7262State *s;
 
-DEFINE_MACHINE("frksh2a", frksh2a_machine_init)
+    s = g_malloc0(sizeof(SH7262State));
+    s->cpu = cpu;
+    return s;
+}
