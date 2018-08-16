@@ -423,6 +423,12 @@ static int get_physical_address(CPUSH4State * env, target_ulong * physical,
                                 int *prot, target_ulong address,
                                 int rw, int access_type)
 {
+    if (env->id == SH_CPU_SH7262)
+    {
+	*physical = address & 0xFFFFFFFF;
+	*prot = PAGE_READ | PAGE_WRITE | PAGE_EXEC;
+	return MMU_OK;
+    }
     /* P1, P2 and P4 areas do not use translation */
     if ((address >= 0x80000000 && address < 0xc0000000) ||
 	address >= 0xe0000000) {

@@ -60,6 +60,8 @@ static void superh_cpu_reset(CPUState *s)
     memset(env, 0, offsetof(CPUSH4State, end_reset_fields));
 
     env->pc = 0xA0000000;
+    if (env->id == SH_CPU_SH7262)
+        env->pc = 0x40000000;
 #if defined(CONFIG_USER_ONLY)
     env->fpscr = FPSCR_PR; /* value for userspace according to the kernel */
     set_float_rounding_mode(float_round_nearest_even, &env->fp_status); /* ?! */

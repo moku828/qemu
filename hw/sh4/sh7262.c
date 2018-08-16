@@ -22,13 +22,16 @@
  * THE SOFTWARE.
  */
 #include "qemu/osdep.h"
+#include "qapi/error.h"
 #include "hw/hw.h"
 #include "hw/sh4/sh.h"
 #include "sysemu/sysemu.h"
+#include "sysemu/qtest.h"
 #include "cpu.h"
 #include "exec/exec-all.h"
 
 typedef struct SH7262State {
+    MemoryRegion bootrom;
     /* CPU */
     SuperHCPU *cpu;
 } SH7262State;
@@ -36,8 +39,20 @@ typedef struct SH7262State {
 SH7262State *sh7262_init(SuperHCPU *cpu, MemoryRegion *sysmem)
 {
     SH7262State *s;
+    int ret;
 
     s = g_malloc0(sizeof(SH7262State));
     s->cpu = cpu;
+
+    // Internal ROM for Boot startup
+    memory_region_init_ram(&s->bootrom, NULL, "bootrom", 0x10000, &error_fatal);
+    memory_region_set_readonly(&s->bootrom, true);
+    memory_region_add_subregion(sysmem, 0x40000000, &s->bootrom);
+    ret = load_image_mr("bootrom.bin", &s->bootrom);
+    if (ret < 0 && !qtest_enabled()) {
+        error_report("Could not load SH7262 bootrom '%s'", "bootrom.bin");
+        exit(1);
+    }
+
     return s;
 }

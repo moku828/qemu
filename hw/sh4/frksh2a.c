@@ -44,7 +44,6 @@ static void frksh2a_init(MachineState *machine)
 
     s = sh7262_init(cpu, sysmem);
 
-    exit(0);
 }
 
 static void frksh2a_machine_init(MachineClass *mc)
