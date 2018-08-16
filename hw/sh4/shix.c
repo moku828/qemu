@@ -84,7 +84,7 @@ static void shix_machine_init(MachineClass *mc)
 {
     mc->desc = "shix card";
     mc->init = shix_init;
-    mc->is_default = 1;
+    //mc->is_default = 1;
     mc->default_cpu_type = TYPE_SH7750R_CPU;
 }
 

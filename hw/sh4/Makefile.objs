@@ -1,3 +1,4 @@
+obj-y += frksh2a.o
 obj-y += shix.o r2d.o
 
 obj-y += sh7750.o sh7750_regnames.o
