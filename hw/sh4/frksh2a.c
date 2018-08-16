@@ -48,7 +48,7 @@ static void frksh2a_machine_init(MachineClass *mc)
     mc->desc = "FRK-SH2A";
     mc->init = frksh2a_init;
     mc->is_default = 1;
-    mc->default_cpu_type = TYPE_SH7750R_CPU;
+    mc->default_cpu_type = TYPE_SH7262_CPU;
 }
 
 DEFINE_MACHINE("frksh2a", frksh2a_machine_init)

@@ -183,6 +183,24 @@ static void sh7785_class_init(ObjectClass *oc, void *data)
     scc->cvr = 0x71440211;
 }
 
+static void sh7262_cpu_initfn(Object *obj)
+{
+    SuperHCPU *cpu = SUPERH_CPU(obj);
+    CPUSH4State *env = &cpu->env;
+
+    env->id = SH_CPU_SH7262;
+    env->features = SH_FEATURE_SH4A;
+}
+
+static void sh7262_class_init(ObjectClass *oc, void *data)
+{
+    SuperHCPUClass *scc = SUPERH_CPU_CLASS(oc);
+
+    scc->pvr = 0x00050000;
+    scc->prr = 0x00000100;
+    scc->cvr = 0x00110000;
+}
+
 static void superh_cpu_realizefn(DeviceState *dev, Error **errp)
 {
     CPUState *cs = CPU(dev);
@@ -275,6 +293,8 @@ static const TypeInfo superh_cpu_type_infos[] = {
                            sh7751r_cpu_initfn),
     DEFINE_SUPERH_CPU_TYPE(TYPE_SH7785_CPU, sh7785_class_init,
                            sh7785_cpu_initfn),
+    DEFINE_SUPERH_CPU_TYPE(TYPE_SH7262_CPU, sh7262_class_init,
+                           sh7262_cpu_initfn),
 
 };
 
