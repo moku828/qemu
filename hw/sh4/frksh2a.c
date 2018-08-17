@@ -33,16 +33,24 @@
 #include "hw/loader.h"
 #include "exec/address-spaces.h"
 #include "qemu/error-report.h"
+#include "hw/ssi/ssi.h"
 
 static void frksh2a_init(MachineState *machine)
 {
     SuperHCPU *cpu;
     struct SH7262State *s;
+    DeviceState *dev;
+    DriveInfo *dinfo;
     MemoryRegion *sysmem = get_system_memory();
     
     cpu = SUPERH_CPU(cpu_create(machine->cpu_type));
 
     s = sh7262_init(cpu, sysmem);
+
+    dev = ssi_create_slave_no_init(sh7262_get_spi_bus(s), "m25p05");
+    dinfo = drive_get_next(IF_MTD);
+    qdev_prop_set_drive(dev, "drive", blk_by_legacy_dinfo(dinfo), &error_fatal);
+    qdev_init_nofail(dev);
 
 }
 

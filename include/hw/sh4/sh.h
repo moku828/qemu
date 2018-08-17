@@ -34,6 +34,14 @@ struct SH7262State;
 
 struct SH7262State *sh7262_init(SuperHCPU *cpu, struct MemoryRegion *sysmem);
 
+typedef struct {
+} sh7262_io_device;
+
+int sh7262_register_io_device(struct SH7262State *s,
+			      sh7262_io_device * device);
+
+SSIBus* sh7262_get_spi_bus(struct SH7262State *s);
+
 /* sh_timer.c */
 #define TMU012_FEAT_TOCR   (1 << 0)
 #define TMU012_FEAT_3CHAN  (1 << 1)
