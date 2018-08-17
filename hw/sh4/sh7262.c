@@ -32,6 +32,7 @@
 
 typedef struct SH7262State {
     MemoryRegion bootrom;
+    MemoryRegion fastram;
     /* CPU */
     SuperHCPU *cpu;
 } SH7262State;
@@ -53,6 +54,10 @@ SH7262State *sh7262_init(SuperHCPU *cpu, MemoryRegion *sysmem)
         error_report("Could not load SH7262 bootrom '%s'", "bootrom.bin");
         exit(1);
     }
+
+    // Fast RAM
+    memory_region_init_ram(&s->fastram, NULL, "fastram", 0x10000, &error_fatal);
+    memory_region_add_subregion(sysmem, 0xFFF80000, &s->fastram);
 
     return s;
 }
