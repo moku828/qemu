@@ -43,6 +43,9 @@ typedef struct {
 typedef struct SH7262State {
     MemoryRegion bootrom;
     MemoryRegion fastram;
+    MemoryRegion largeram;
+    MemoryRegion largeram_1c;
+    MemoryRegion largeram_3c;
     MemoryRegion peripheral;
     MemoryRegion peripheral_fffc;
     /* CPU */
@@ -168,6 +171,15 @@ SH7262State *sh7262_init(SuperHCPU *cpu, MemoryRegion *sysmem)
     // Fast RAM
     memory_region_init_ram(&s->fastram, NULL, "fastram", 0x10000, &error_fatal);
     memory_region_add_subregion(sysmem, 0xFFF80000, &s->fastram);
+
+    // Large RAM
+    memory_region_init_ram(&s->largeram, NULL, "largeram", 0x00100000, &error_fatal);
+    memory_region_init_alias(&s->largeram_1c, NULL, "largeram_1c", &s->largeram, 0x00000000,
+                             0x00100000);
+    memory_region_add_subregion(sysmem, 0x1C000000, &s->largeram_1c);
+    memory_region_init_alias(&s->largeram_3c, NULL, "largeram_3c", &s->largeram, 0x00000000,
+                             0x00100000);
+    memory_region_add_subregion(sysmem, 0x3C000000, &s->largeram_3c);
 
     // Peripheral
     memory_region_init_io(&s->peripheral, NULL, &sh7262_peripheral_ops, s,
