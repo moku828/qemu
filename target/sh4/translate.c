@@ -852,8 +852,7 @@ static void _decode_opc(DisasContext * ctx)
         gen_helper_sleep(cpu_env);
 	return;
     case 0x0068:		/* nott */
-fprintf(stderr, "nott is not implemented\n");
-fflush(stderr);
+        tcg_gen_setcondi_i32(TCG_COND_EQ, cpu_sr_t, cpu_sr_t, 0);
         return;
     case 0x006b:		/* rts/n */
 	tcg_gen_mov_i32(cpu_pc, cpu_pr);
