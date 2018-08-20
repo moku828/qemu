@@ -68,6 +68,9 @@ static void superh_cpu_reset(CPUState *s)
 #else
     env->sr = (1u << SR_MD) | (1u << SR_RB) | (1u << SR_BL) |
               (1u << SR_I3) | (1u << SR_I2) | (1u << SR_I1) | (1u << SR_I0);
+    if (env->id == SH_CPU_SH7262)
+        env->sr = (1u << SR_MD) | (0u << SR_RB) | (0u << SR_BL) |
+                  (1u << SR_I3) | (1u << SR_I2) | (1u << SR_I1) | (1u << SR_I0);
     env->fpscr = FPSCR_DN | FPSCR_RM_ZERO; /* CPU reset value according to SH4 manual */
     set_float_rounding_mode(float_round_to_zero, &env->fp_status);
     set_flush_to_zero(1, &env->fp_status);
@@ -267,7 +270,7 @@ static void superh_cpu_class_init(ObjectClass *oc, void *data)
     cc->disas_set_info = superh_cpu_disas_set_info;
     cc->tcg_initialize = sh4_translate_init;
 
-    cc->gdb_num_core_regs = 59;
+    cc->gdb_num_core_regs = 68;
 
     dc->vmsd = &vmstate_sh_cpu;
 }

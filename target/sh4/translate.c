@@ -44,6 +44,7 @@ typedef struct DisasContext {
     uint32_t features;
 
     uint16_t opcode;
+    uint16_t opcode2;
 
     bool has_movcal;
 } DisasContext;
@@ -350,9 +351,11 @@ static inline void gen_store_fpr64(DisasContext *ctx, TCGv_i64 t, int reg)
     tcg_gen_extr_i64_i32(cpu_fregs[reg + 1], cpu_fregs[reg], t);
 }
 
+#define B2_0 (ctx->opcode & 0x7)
 #define B3_0 (ctx->opcode & 0xf)
 #define B6_4 ((ctx->opcode >> 4) & 0x7)
 #define B7_4 ((ctx->opcode >> 4) & 0xf)
+#define B7 ((ctx->opcode >> 7) & 0x1)
 #define B7_0 (ctx->opcode & 0xff)
 #define B7_0s ((int32_t) (int8_t) (ctx->opcode & 0xff))
 #define B11_0s (ctx->opcode & 0x800 ? 0xfffff000 | (ctx->opcode & 0xfff) : \
@@ -396,6 +399,351 @@ static inline void gen_store_fpr64(DisasContext *ctx, TCGv_i64 t, int reg)
         goto do_illegal;                      \
     }
 
+static int is_32bit_instruction(DisasContext * ctx)
+{
+// New instructions in SH-2A
+    switch (ctx->opcode) {
+    case 0x0068:		/* nott */
+    case 0x006b:		/* rts/n */
+    case 0x005b:		/* resbank */
+        return 0;
+    default:
+        ;
+    }
+    switch (ctx->opcode & 0xf000) {
+    default:
+        ;
+    }
+    switch (ctx->opcode & 0xf00f) {
+    case 0x3001:
+        switch(ctx->opcode2 & 0xf000) {
+        case 0x0000:		/* mov.b Rm,@(disp12,Rn) */
+        case 0x1000:		/* mov.w Rm,@(disp12,Rn) */
+        case 0x2000:		/* mov.l Rm,@(disp12,Rn) */
+        case 0x4000:		/* mov.b @(disp12,Rm),Rn */
+        case 0x5000:		/* mov.w @(disp12,Rm),Rn */
+        case 0x6000:		/* mov.l @(disp12,Rm),Rn */
+        case 0x8000:		/* movu.b @(disp12,Rm),Rn */
+        case 0x9000:		/* movu.w @(disp12,Rm),Rn */
+        case 0x7000:		/* fmov @(disp12,Rm),{F,D}Rn */
+        case 0x3000:		/* fmov {F,D}Rm,@(disp12,Rn) */
+            return 1;
+        default:
+            ;
+        }
+        break;
+    case 0x0000:		/* movi20 #imm20,Rn */
+    case 0x0001:		/* movi20s #imm20,Rn */
+        return 1;
+    default:
+        ;
+    }
+    switch (ctx->opcode & 0xff00) {
+    case 0x8300:		/* jsr/n @@(disp8,TBR) */
+        return 0;
+    default:
+        ;
+    }
+    switch (ctx->opcode & 0xf08f) {
+    case 0x3009:
+        switch(ctx->opcode2 & 0xf000) {
+        case 0x4000:		/* band.b #imm3,@(disp12,Rn) */
+        case 0xc000:		/* bandnot.b #imm3,@(disp12,Rn) */
+        case 0x0000:		/* bclr.b #imm3,@(disp12,Rn) */
+        case 0x3000:		/* bld.b #imm3,@(disp12,Rn) */
+        case 0xb000:		/* bldnot.b #imm3,@(disp12,Rn) */
+        case 0x5000:		/* bor.b #imm3,@(disp12,Rn) */
+        case 0xd000:		/* bornot.b #imm3,@(disp12,Rn) */
+        case 0x1000:		/* bset.b #imm3,@(disp12,Rn) */
+        case 0x2000:		/* bst.b #imm3,@(disp12,Rn) */
+        case 0x6000:		/* bxor.b #imm3,@(disp12,Rn) */
+            return 1;
+        default:
+            ;
+        }
+        break;
+    default:
+        ;
+    }
+    switch (ctx->opcode & 0xf0ff) {
+    case 0x408b:		/* mov.b R0,@Rn+ */
+    case 0x409b:		/* mob.w R0,@Rn+ */
+    case 0x40ab:		/* mov.l R0,@Rn+ */
+    case 0x40cb:		/* mov.b @-Rm,R0 */
+    case 0x40db:		/* mov.w @-Rm,R0 */
+    case 0x40eb:		/* mov.l @-Rm,R0 */
+    case 0x40f1:		/* movml.l Rm,@-R15 */
+    case 0x40f5:		/* movml.l @R15+,Rn */
+    case 0x40f0:		/* movmu.l Rm,@-R15 */
+    case 0x40f4:		/* movmu.l @R15+,Rn */
+    case 0x0039:		/* movrt Rn */
+    case 0x4091:		/* clips.b Rn */
+    case 0x4095:		/* clips.w Rn */
+    case 0x4081:		/* clipu.b Rn */
+    case 0x4085:		/* clipu.w Rn */
+    case 0x4094:		/* divs R0,Rn */
+    case 0x4084:		/* divu R0,Rn */
+    case 0x4080:		/* mulr R0,Rn */
+    case 0x404b:		/* jsr/n @Rm */
+    case 0x007b:		/* rtv/n Rm */
+    case 0x40e5:		/* ldbank @Rm,R0 */
+    case 0x404a:		/* ldc Rm,TBR */
+    case 0x40e1:		/* stbank R0,@Rn */
+    case 0x004a:		/* stc TBR,Rn */
+        return 0;
+    default:
+        ;
+    }
+    switch (ctx->opcode & 0xff08) {
+    case 0x8600:		/* bclr #imm3,Rn */
+    case 0x8708:		/* bld #imm3,Rn */
+    case 0x8608:		/* bset #imm3,Rn */
+    case 0x8700:		/* bst #imm3,Rn */
+        return 0;
+    default:
+        ;
+    }
+
+    switch (ctx->opcode) {
+    case 0x0019:		/* div0u */
+    case 0x000b:		/* rts */
+    case 0x0028:		/* clrmac */
+    case 0x0048:		/* clrs */
+    case 0x0008:		/* clrt */
+    case 0x0038:		/* ldtlb */
+    case 0x002b:		/* rte */
+    case 0x0058:		/* sets */
+    case 0x0018:		/* sett */
+    case 0xfbfd:		/* frchg */
+    case 0xf3fd:		/* fschg */
+    case 0xf7fd:                /* fpchg */
+    case 0x0009:		/* nop */
+    case 0x001b:		/* sleep */
+        return 0;
+    default:
+        ;
+    }
+
+    switch (ctx->opcode & 0xf000) {
+    case 0x1000:		/* mov.l Rm,@(disp,Rn) */
+    case 0x5000:		/* mov.l @(disp,Rm),Rn */
+    case 0xe000:		/* mov #imm,Rn */
+    case 0x9000:		/* mov.w @(disp,PC),Rn */
+    case 0xd000:		/* mov.l @(disp,PC),Rn */
+    case 0x7000:		/* add #imm,Rn */
+    case 0xa000:		/* bra disp */
+    case 0xb000:		/* bsr disp */
+        return 0;
+    default:
+        ;
+    }
+
+    switch (ctx->opcode & 0xf00f) {
+    case 0x6003:		/* mov Rm,Rn */
+    case 0x2000:		/* mov.b Rm,@Rn */
+    case 0x2001:		/* mov.w Rm,@Rn */
+    case 0x2002:		/* mov.l Rm,@Rn */
+    case 0x6000:		/* mov.b @Rm,Rn */
+    case 0x6001:		/* mov.w @Rm,Rn */
+    case 0x6002:		/* mov.l @Rm,Rn */
+    case 0x2004:		/* mov.b Rm,@-Rn */
+    case 0x2005:		/* mov.w Rm,@-Rn */
+    case 0x2006:		/* mov.l Rm,@-Rn */
+    case 0x6004:		/* mov.b @Rm+,Rn */
+    case 0x6005:		/* mov.w @Rm+,Rn */
+    case 0x6006:		/* mov.l @Rm+,Rn */
+    case 0x0004:		/* mov.b Rm,@(R0,Rn) */
+    case 0x0005:		/* mov.w Rm,@(R0,Rn) */
+    case 0x0006:		/* mov.l Rm,@(R0,Rn) */
+    case 0x000c:		/* mov.b @(R0,Rm),Rn */
+    case 0x000d:		/* mov.w @(R0,Rm),Rn */
+    case 0x000e:		/* mov.l @(R0,Rm),Rn */
+    case 0x6008:		/* swap.b Rm,Rn */
+    case 0x6009:		/* swap.w Rm,Rn */
+    case 0x200d:		/* xtrct Rm,Rn */
+    case 0x300c:		/* add Rm,Rn */
+    case 0x300e:		/* addc Rm,Rn */
+    case 0x300f:		/* addv Rm,Rn */
+    case 0x2009:		/* and Rm,Rn */
+    case 0x3000:		/* cmp/eq Rm,Rn */
+    case 0x3003:		/* cmp/ge Rm,Rn */
+    case 0x3007:		/* cmp/gt Rm,Rn */
+    case 0x3006:		/* cmp/hi Rm,Rn */
+    case 0x3002:		/* cmp/hs Rm,Rn */
+    case 0x200c:		/* cmp/str Rm,Rn */
+    case 0x2007:		/* div0s Rm,Rn */
+    case 0x3004:		/* div1 Rm,Rn */
+    case 0x300d:		/* dmuls.l Rm,Rn */
+    case 0x3005:		/* dmulu.l Rm,Rn */
+    case 0x600e:		/* exts.b Rm,Rn */
+    case 0x600f:		/* exts.w Rm,Rn */
+    case 0x600c:		/* extu.b Rm,Rn */
+    case 0x600d:		/* extu.w Rm,Rn */
+    case 0x000f:		/* mac.l @Rm+,@Rn+ */
+    case 0x400f:		/* mac.w @Rm+,@Rn+ */
+    case 0x0007:		/* mul.l Rm,Rn */
+    case 0x200f:		/* muls.w Rm,Rn */
+    case 0x200e:		/* mulu.w Rm,Rn */
+    case 0x600b:		/* neg Rm,Rn */
+    case 0x600a:		/* negc Rm,Rn */
+    case 0x6007:		/* not Rm,Rn */
+    case 0x200b:		/* or Rm,Rn */
+    case 0x400c:		/* shad Rm,Rn */
+    case 0x400d:		/* shld Rm,Rn */
+    case 0x3008:		/* sub Rm,Rn */
+    case 0x300a:		/* subc Rm,Rn */
+    case 0x300b:		/* subv Rm,Rn */
+    case 0x2008:		/* tst Rm,Rn */
+    case 0x200a:		/* xor Rm,Rn */
+    case 0xf00c: /* fmov {F,D,X}Rm,{F,D,X}Rn - FPSCR: Nothing */
+    case 0xf00a: /* fmov {F,D,X}Rm,@Rn - FPSCR: Nothing */
+    case 0xf008: /* fmov @Rm,{F,D,X}Rn - FPSCR: Nothing */
+    case 0xf009: /* fmov @Rm+,{F,D,X}Rn - FPSCR: Nothing */
+    case 0xf00b: /* fmov {F,D,X}Rm,@-Rn - FPSCR: Nothing */
+    case 0xf006: /* fmov @(R0,Rm),{F,D,X}Rm - FPSCR: Nothing */
+    case 0xf007: /* fmov {F,D,X}Rn,@(R0,Rn) - FPSCR: Nothing */
+    case 0xf000: /* fadd Rm,Rn - FPSCR: R[PR,Enable.O/U/I]/W[Cause,Flag] */
+    case 0xf001: /* fsub Rm,Rn - FPSCR: R[PR,Enable.O/U/I]/W[Cause,Flag] */
+    case 0xf002: /* fmul Rm,Rn - FPSCR: R[PR,Enable.O/U/I]/W[Cause,Flag] */
+    case 0xf003: /* fdiv Rm,Rn - FPSCR: R[PR,Enable.O/U/I]/W[Cause,Flag] */
+    case 0xf004: /* fcmp/eq Rm,Rn - FPSCR: R[PR,Enable.V]/W[Cause,Flag] */
+    case 0xf005: /* fcmp/gt Rm,Rn - FPSCR: R[PR,Enable.V]/W[Cause,Flag] */
+    case 0xf00e: /* fmac FR0,RM,Rn */
+        return 0;
+    default:
+        ;
+    }
+
+    switch (ctx->opcode & 0xff00) {
+    case 0xc900:		/* and #imm,R0 */
+    case 0xcd00:		/* and.b #imm,@(R0,GBR) */
+    case 0x8b00:		/* bf label */
+    case 0x8f00:		/* bf/s label */
+    case 0x8900:		/* bt label */
+    case 0x8d00:		/* bt/s label */
+    case 0x8800:		/* cmp/eq #imm,R0 */
+    case 0xc400:		/* mov.b @(disp,GBR),R0 */
+    case 0xc500:		/* mov.w @(disp,GBR),R0 */
+    case 0xc600:		/* mov.l @(disp,GBR),R0 */
+    case 0xc000:		/* mov.b R0,@(disp,GBR) */
+    case 0xc100:		/* mov.w R0,@(disp,GBR) */
+    case 0xc200:		/* mov.l R0,@(disp,GBR) */
+    case 0x8000:		/* mov.b R0,@(disp,Rn) */
+    case 0x8100:		/* mov.w R0,@(disp,Rn) */
+    case 0x8400:		/* mov.b @(disp,Rn),R0 */
+    case 0x8500:		/* mov.w @(disp,Rn),R0 */
+    case 0xc700:		/* mova @(disp,PC),R0 */
+    case 0xcb00:		/* or #imm,R0 */
+    case 0xcf00:		/* or.b #imm,@(R0,GBR) */
+    case 0xc300:		/* trapa #imm */
+    case 0xc800:		/* tst #imm,R0 */
+    case 0xcc00:		/* tst.b #imm,@(R0,GBR) */
+    case 0xca00:		/* xor #imm,R0 */
+    case 0xce00:		/* xor.b #imm,@(R0,GBR) */
+        return 0;
+    default:
+        ;
+    }
+
+    switch (ctx->opcode & 0xf08f) {
+    case 0x408e:		/* ldc Rm,Rn_BANK */
+    case 0x4087:		/* ldc.l @Rm+,Rn_BANK */
+    case 0x0082:		/* stc Rm_BANK,Rn */
+    case 0x4083:		/* stc.l Rm_BANK,@-Rn */
+        return 0;
+    default:
+        ;
+    }
+
+    switch (ctx->opcode & 0xf0ff) {
+    case 0x0023:		/* braf Rn */
+    case 0x0003:		/* bsrf Rn */
+    case 0x4015:		/* cmp/pl Rn */
+    case 0x4011:		/* cmp/pz Rn */
+    case 0x4010:		/* dt Rn */
+    case 0x402b:		/* jmp @Rn */
+    case 0x400b:		/* jsr @Rn */
+    case 0x400e:		/* ldc Rm,SR */
+    case 0x4007:		/* ldc.l @Rm+,SR */
+    case 0x0002:		/* stc SR,Rn */
+    case 0x4003:		/* stc SR,@-Rn */
+#define LD(reg,ldnum,ldpnum,prechk)		\
+  case ldnum:							\
+  case ldpnum:							
+#define ST(reg,stnum,stpnum,prechk)		\
+  case stnum:							\
+  case stpnum:							
+#define LDST(reg,ldnum,ldpnum,stnum,stpnum,prechk)		\
+	LD(reg,ldnum,ldpnum,prechk)				\
+	ST(reg,stnum,stpnum,prechk)
+	LDST(gbr,  0x401e, 0x4017, 0x0012, 0x4013, {})
+	LDST(vbr,  0x402e, 0x4027, 0x0022, 0x4023, CHECK_PRIVILEGED)
+	LDST(ssr,  0x403e, 0x4037, 0x0032, 0x4033, CHECK_PRIVILEGED)
+	LDST(spc,  0x404e, 0x4047, 0x0042, 0x4043, CHECK_PRIVILEGED)
+	ST(sgr,  0x003a, 0x4032, CHECK_PRIVILEGED)
+        LD(sgr,  0x403a, 0x4036, CHECK_PRIVILEGED CHECK_SH4A)
+	LDST(dbr,  0x40fa, 0x40f6, 0x00fa, 0x40f2, CHECK_PRIVILEGED)
+	LDST(mach, 0x400a, 0x4006, 0x000a, 0x4002, {})
+	LDST(macl, 0x401a, 0x4016, 0x001a, 0x4012, {})
+	LDST(pr,   0x402a, 0x4026, 0x002a, 0x4022, {})
+	LDST(fpul, 0x405a, 0x4056, 0x005a, 0x4052, {CHECK_FPU_ENABLED})
+#undef LD
+#undef ST
+#undef LDST
+    case 0x406a:		/* lds Rm,FPSCR */
+    case 0x4066:		/* lds.l @Rm+,FPSCR */
+    case 0x006a:		/* sts FPSCR,Rn */
+    case 0x4062:		/* sts FPSCR,@-Rn */
+    case 0x00c3:		/* movca.l R0,@Rm */
+    case 0x40a9:                /* movua.l @Rm,R0 */
+    case 0x40e9:                /* movua.l @Rm+,R0 */
+    case 0x0029:		/* movt Rn */
+    case 0x0073:
+    case 0x0063:
+    case 0x0093:		/* ocbi @Rn */
+    case 0x00a3:		/* ocbp @Rn */
+    case 0x00b3:		/* ocbwb @Rn */
+    case 0x0083:		/* pref @Rn */
+    case 0x00d3:		/* prefi @Rn */
+    case 0x00e3:		/* icbi @Rn */
+    case 0x00ab:		/* synco */
+    case 0x4024:		/* rotcl Rn */
+    case 0x4025:		/* rotcr Rn */
+    case 0x4004:		/* rotl Rn */
+    case 0x4005:		/* rotr Rn */
+    case 0x4000:		/* shll Rn */
+    case 0x4020:		/* shal Rn */
+    case 0x4021:		/* shar Rn */
+    case 0x4001:		/* shlr Rn */
+    case 0x4008:		/* shll2 Rn */
+    case 0x4018:		/* shll8 Rn */
+    case 0x4028:		/* shll16 Rn */
+    case 0x4009:		/* shlr2 Rn */
+    case 0x4019:		/* shlr8 Rn */
+    case 0x4029:		/* shlr16 Rn */
+    case 0x401b:		/* tas.b @Rn */
+    case 0xf00d: /* fsts FPUL,FRn - FPSCR: Nothing */
+    case 0xf01d: /* flds FRm,FPUL - FPSCR: Nothing */
+    case 0xf02d: /* float FPUL,FRn/DRn - FPSCR: R[PR,Enable.I]/W[Cause,Flag] */
+    case 0xf03d: /* ftrc FRm/DRm,FPUL - FPSCR: R[PR,Enable.V]/W[Cause,Flag] */
+    case 0xf04d: /* fneg FRn/DRn - FPSCR: Nothing */
+    case 0xf05d: /* fabs FRn/DRn - FPCSR: Nothing */
+    case 0xf06d: /* fsqrt FRn */
+    case 0xf07d: /* fsrra FRn */
+    case 0xf08d: /* fldi0 FRn - FPSCR: R[PR] */
+    case 0xf09d: /* fldi1 FRn - FPSCR: R[PR] */
+    case 0xf0ad: /* fcnvsd FPUL,DRn */
+    case 0xf0bd: /* fcnvds DRn,FPUL */
+    case 0xf0ed: /* fipr FVm,FVn */
+    case 0xf0fd: /* ftrv XMTRX,FVn */
+        return 0;
+    default:
+        ;
+    }
+
+    return -1;
+}
+
 static void _decode_opc(DisasContext * ctx)
 {
     /* This code tries to make movcal emulation sufficiently
@@ -430,7 +778,14 @@ static void _decode_opc(DisasContext * ctx)
 	}
 
 #if 0
-    fprintf(stderr, "Translating opcode 0x%04x\n", ctx->opcode);
+    if (is_32bit_instruction(ctx)) {
+        fprintf(stderr, "Translating opcode 0x%04x opcode2 0x%04x at pc 0x%08x\n",
+                ctx->opcode, ctx->opcode2, ctx->base.pc_next);
+    } else {
+        fprintf(stderr, "Translating opcode 0x%04x at pc 0x%08x\n",
+                ctx->opcode, ctx->base.pc_next);
+    }
+    fflush(stderr);
 #endif
 
     switch (ctx->opcode) {
@@ -496,6 +851,25 @@ static void _decode_opc(DisasContext * ctx)
         tcg_gen_movi_i32(cpu_pc, ctx->base.pc_next + 2);
         gen_helper_sleep(cpu_env);
 	return;
+    case 0x0068:		/* nott */
+fprintf(stderr, "nott is not implemented\n");
+fflush(stderr);
+        return;
+    case 0x006b:		/* rts/n */
+	tcg_gen_mov_i32(cpu_pc, cpu_pr);
+        if (ctx->base.singlestep_enabled) {
+            gen_helper_debug(cpu_env);
+        } else if (use_exit_tb(ctx)) {
+            tcg_gen_exit_tb(NULL, 0);
+        } else {
+            tcg_gen_lookup_and_goto_ptr();
+        }
+        ctx->base.is_jmp = DISAS_NORETURN;
+        return;
+    case 0x005b:		/* resbank */
+fprintf(stderr, "resbank is not implemented\n");
+fflush(stderr);
+        return;
     }
 
     switch (ctx->opcode & 0xf000) {
@@ -1160,6 +1534,64 @@ static void _decode_opc(DisasContext * ctx)
         gen_helper_fmac_FT(FREG(B11_8), cpu_env,
                            FREG(0), FREG(B7_4), FREG(B11_8));
         return;
+    case 0x3001:
+        switch(ctx->opcode2 & 0xf000) {
+        case 0x0000:		/* mov.b Rm,@(disp12,Rn) */
+fprintf(stderr, "mov.b 1 is not implemented\n");
+fflush(stderr);
+            return;
+        case 0x1000:		/* mov.w Rm,@(disp12,Rn) */
+fprintf(stderr, "mov.w 1 is not implemented\n");
+fflush(stderr);
+            return;
+        case 0x2000:		/* mov.l Rm,@(disp12,Rn) */
+fprintf(stderr, "mov.l 1 is not implemented\n");
+fflush(stderr);
+            return;
+        case 0x4000:		/* mov.b @(disp12,Rm),Rn */
+fprintf(stderr, "mov.b 2 is not implemented\n");
+fflush(stderr);
+            return;
+        case 0x5000:		/* mov.w @(disp12,Rm),Rn */
+fprintf(stderr, "mov.w 2 is not implemented\n");
+fflush(stderr);
+            return;
+        case 0x6000:		/* mov.l @(disp12,Rm),Rn */
+fprintf(stderr, "mov.l 2 is not implemented\n");
+fflush(stderr);
+            return;
+        case 0x8000:		/* movu.b @(disp12,Rm),Rn */
+fprintf(stderr, "movu.b is not implemented\n");
+fflush(stderr);
+            return;
+        case 0x9000:		/* movu.w @(disp12,Rm),Rn */
+            {
+                TCGv addr = tcg_temp_new();
+                tcg_gen_addi_i32(addr, REG(B7_4), (ctx->opcode2 & 0x0fff) << 1);
+                tcg_gen_qemu_ld_i32(REG(B11_8), addr, ctx->memidx, MO_UW);
+                tcg_temp_free(addr);
+            }
+            return;
+        case 0x7000:		/* fmov @(disp12,Rm),{F,D}Rn */
+fprintf(stderr, "fmov 1 is not implemented\n");
+fflush(stderr);
+            return;
+        case 0x3000:		/* fmov {F,D}Rm,@(disp12,Rn) */
+fprintf(stderr, "fmov 2 is not implemented\n");
+fflush(stderr);
+            return;
+        default:
+            ;
+        }
+        break;
+    case 0x0000:		/* movi20 #imm20,Rn */
+        tcg_gen_movi_i32(REG(B11_8), (int32_t)((B7_4 << 16) | (B7 ? 0xfff00000 : 0)
+                         | ctx->opcode2));
+        return;
+    case 0x0001:		/* movi20s #imm20,Rn */
+        tcg_gen_movi_i32(REG(B11_8), (int32_t)((B7_4 << 24) | (B7 ? 0xf0000000 : 0)
+                         | (ctx->opcode2 << 8)));
+        return;
     }
 
     switch (ctx->opcode & 0xff00) {
@@ -1347,6 +1779,10 @@ static void _decode_opc(DisasContext * ctx)
 	    tcg_temp_free(addr);
 	}
 	return;
+    case 0x8300:		/* jsr/n @@(disp8,TBR) */
+fprintf(stderr, "jsr/n is not implemented\n");
+fflush(stderr);
+        return;
     }
 
     switch (ctx->opcode & 0xf08f) {
@@ -1373,6 +1809,238 @@ static void _decode_opc(DisasContext * ctx)
 	    tcg_temp_free(addr);
 	}
 	return;
+    case 0x3009:
+        switch(ctx->opcode2 & 0xf000) {
+        case 0x4000:		/* band.b #imm3,@(disp12,Rn) */
+            {
+                TCGv addr, val, assignbit, assignbit_expr, t_expr, expr;
+                addr = tcg_temp_new();
+                tcg_gen_addi_i32(addr, REG(B11_8), (ctx->opcode2 & 0x0fff));
+                val = tcg_temp_new();
+                tcg_gen_qemu_ld_i32(val, addr, ctx->memidx, MO_UB);
+                assignbit = tcg_temp_new();
+                // assignbit = (0x00000001<<imm)&val
+                tcg_gen_andi_i32(assignbit, val, (1 << B6_4));
+                assignbit_expr = tcg_temp_new();
+                // assignbit_expr = (assignbit == 0)
+                tcg_gen_setcondi_i32(TCG_COND_EQ, assignbit_expr, assignbit, 0);
+                t_expr = tcg_temp_new();
+                // t_expr = (T==0)
+                tcg_gen_setcondi_i32(TCG_COND_EQ, t_expr, cpu_sr_t, 0);
+                expr = tcg_temp_new();
+                // expr = (t_expr || assignbit_expr)
+                tcg_gen_or_i32(expr, t_expr, assignbit_expr);
+                // T = (expr == 0) ? 1 : 0
+                tcg_gen_setcondi_i32(TCG_COND_EQ, cpu_sr_t, expr, 0);
+                tcg_temp_free(expr);
+                tcg_temp_free(t_expr);
+                tcg_temp_free(assignbit_expr);
+                tcg_temp_free(assignbit);
+                tcg_temp_free(val);
+                tcg_temp_free(addr);
+            }
+            return;
+        case 0xc000:		/* bandnot.b #imm3,@(disp12,Rn) */
+            {
+                TCGv addr, val, assignbit, assignbit_expr, t_expr, expr;
+                addr = tcg_temp_new();
+                tcg_gen_addi_i32(addr, REG(B11_8), (ctx->opcode2 & 0x0fff));
+                val = tcg_temp_new();
+                tcg_gen_qemu_ld_i32(val, addr, ctx->memidx, MO_UB);
+                assignbit = tcg_temp_new();
+                // assignbit = (0x00000001<<imm)&val
+                tcg_gen_andi_i32(assignbit, val, (1 << B6_4));
+                assignbit_expr = tcg_temp_new();
+                // assignbit_expr = (assignbit == 0)
+                tcg_gen_setcondi_i32(TCG_COND_EQ, assignbit_expr, assignbit, 0);
+                t_expr = tcg_temp_new();
+                // t_expr = (T==1)
+                tcg_gen_setcondi_i32(TCG_COND_EQ, t_expr, cpu_sr_t, 1);
+                expr = tcg_temp_new();
+                // expr = (t_expr && assignbit_expr)
+                tcg_gen_and_i32(expr, t_expr, assignbit_expr);
+                // T = (expr == 1) ? 1 : 0
+                tcg_gen_setcondi_i32(TCG_COND_EQ, cpu_sr_t, expr, 1);
+                tcg_temp_free(expr);
+                tcg_temp_free(t_expr);
+                tcg_temp_free(assignbit_expr);
+                tcg_temp_free(assignbit);
+                tcg_temp_free(val);
+                tcg_temp_free(addr);
+            }
+            return;
+        case 0x0000:		/* bclr.b #imm3,@(disp12,Rn) */
+            {
+                TCGv addr, val;
+                addr = tcg_temp_new();
+                tcg_gen_addi_i32(addr, REG(B11_8), (ctx->opcode2 & 0x0fff));
+                val = tcg_temp_new();
+                tcg_gen_qemu_ld_i32(val, addr, ctx->memidx, MO_UB);
+                tcg_gen_andi_i32(val, val, ~(1 << B6_4));
+                tcg_gen_qemu_st_i32(val, addr, ctx->memidx, MO_UB);
+                tcg_temp_free(val);
+                tcg_temp_free(addr);
+            }
+            return;
+        case 0x3000:		/* bld.b #imm3,@(disp12,Rn) */
+            {
+                TCGv addr, val;
+                addr = tcg_temp_new();
+                tcg_gen_addi_i32(addr, REG(B11_8), (ctx->opcode2 & 0x0fff));
+                val = tcg_temp_new();
+                tcg_gen_qemu_ld_i32(val, addr, ctx->memidx, MO_UB);
+                tcg_gen_andi_i32(val, val, (1 << B6_4));
+                tcg_gen_setcondi_i32(TCG_COND_NE, cpu_sr_t, val, 0);
+                tcg_temp_free(val);
+                tcg_temp_free(addr);
+            }
+            return;
+        case 0xb000:		/* bldnot.b #imm3,@(disp12,Rn) */
+            {
+                TCGv addr, val;
+                addr = tcg_temp_new();
+                tcg_gen_addi_i32(addr, REG(B11_8), (ctx->opcode2 & 0x0fff));
+                val = tcg_temp_new();
+                tcg_gen_qemu_ld_i32(val, addr, ctx->memidx, MO_UB);
+                tcg_gen_andi_i32(val, val, (1 << B6_4));
+                tcg_gen_setcondi_i32(TCG_COND_EQ, cpu_sr_t, val, 0);
+                tcg_temp_free(val);
+                tcg_temp_free(addr);
+            }
+            return;
+        case 0x5000:		/* bor.b #imm3,@(disp12,Rn) */
+            {
+                TCGv addr, val, assignbit, assignbit_expr, t_expr, expr;
+                addr = tcg_temp_new();
+                tcg_gen_addi_i32(addr, REG(B11_8), (ctx->opcode2 & 0x0fff));
+                val = tcg_temp_new();
+                tcg_gen_qemu_ld_i32(val, addr, ctx->memidx, MO_UB);
+                assignbit = tcg_temp_new();
+                // assignbit = (0x00000001<<imm)&val
+                tcg_gen_andi_i32(assignbit, val, (1 << B6_4));
+                assignbit_expr = tcg_temp_new();
+                // assignbit_expr = (assignbit == 0)
+                tcg_gen_setcondi_i32(TCG_COND_EQ, assignbit_expr, assignbit, 0);
+                t_expr = tcg_temp_new();
+                // t_expr = (T==0)
+                tcg_gen_setcondi_i32(TCG_COND_EQ, t_expr, cpu_sr_t, 0);
+                expr = tcg_temp_new();
+                // expr = (t_expr && assignbit_expr)
+                tcg_gen_and_i32(expr, t_expr, assignbit_expr);
+                // T = (expr == 0) ? 1 : 0
+                tcg_gen_setcondi_i32(TCG_COND_EQ, cpu_sr_t, expr, 0);
+                tcg_temp_free(expr);
+                tcg_temp_free(t_expr);
+                tcg_temp_free(assignbit_expr);
+                tcg_temp_free(assignbit);
+                tcg_temp_free(val);
+                tcg_temp_free(addr);
+            }
+            return;
+        case 0xd000:		/* bornot.b #imm3,@(disp12,Rn) */
+            {
+                TCGv addr, val, assignbit, assignbit_expr, t_expr, expr;
+                addr = tcg_temp_new();
+                tcg_gen_addi_i32(addr, REG(B11_8), (ctx->opcode2 & 0x0fff));
+                val = tcg_temp_new();
+                tcg_gen_qemu_ld_i32(val, addr, ctx->memidx, MO_UB);
+                assignbit = tcg_temp_new();
+                // assignbit = (0x00000001<<imm)&val
+                tcg_gen_andi_i32(assignbit, val, (1 << B6_4));
+                assignbit_expr = tcg_temp_new();
+                // assignbit_expr = (assignbit == 0)
+                tcg_gen_setcondi_i32(TCG_COND_EQ, assignbit_expr, assignbit, 0);
+                t_expr = tcg_temp_new();
+                // t_expr = (T==1)
+                tcg_gen_setcondi_i32(TCG_COND_EQ, t_expr, cpu_sr_t, 1);
+                expr = tcg_temp_new();
+                // expr = (t_expr || assignbit_expr)
+                tcg_gen_or_i32(expr, t_expr, assignbit_expr);
+                // T = (expr == 1) ? 1 : 0
+                tcg_gen_setcondi_i32(TCG_COND_EQ, cpu_sr_t, expr, 1);
+                tcg_temp_free(expr);
+                tcg_temp_free(t_expr);
+                tcg_temp_free(assignbit_expr);
+                tcg_temp_free(assignbit);
+                tcg_temp_free(val);
+                tcg_temp_free(addr);
+            }
+            return;
+        case 0x1000:		/* bset.b #imm3,@(disp12,Rn) */
+            {
+                TCGv addr, val;
+                addr = tcg_temp_new();
+                tcg_gen_addi_i32(addr, REG(B11_8), (ctx->opcode2 & 0x0fff));
+                val = tcg_temp_new();
+                tcg_gen_qemu_ld_i32(val, addr, ctx->memidx, MO_UB);
+                tcg_gen_ori_i32(val, val, (1 << B6_4));
+                tcg_gen_qemu_st_i32(val, addr, ctx->memidx, MO_UB);
+                tcg_temp_free(val);
+                tcg_temp_free(addr);
+            }
+            return;
+        case 0x2000:		/* bst.b #imm3,@(disp12,Rn) */
+            {
+                TCGv addr, val, t_shift;
+                addr = tcg_temp_new();
+                tcg_gen_addi_i32(addr, REG(B11_8), (ctx->opcode2 & 0x0fff));
+                val = tcg_temp_new();
+                tcg_gen_qemu_ld_i32(val, addr, ctx->memidx, MO_UB);
+                t_shift = tcg_temp_new();
+                tcg_gen_shli_i32(t_shift, cpu_sr_t, B6_4);
+                tcg_gen_andi_i32(val, val, ~(1 << B6_4));
+                tcg_gen_or_i32(val, val, t_shift);
+                tcg_gen_qemu_st_i32(val, addr, ctx->memidx, MO_UB);
+                tcg_temp_free(t_shift);
+                tcg_temp_free(val);
+                tcg_temp_free(addr);
+            }
+            return;
+        case 0x6000:		/* bxor.b #imm3,@(disp12,Rn) */
+            {
+                TCGv addr, val, assignbit, assignbit_expr, t_expr, expr1, expr2, expr;
+                addr = tcg_temp_new();
+                tcg_gen_addi_i32(addr, REG(B11_8), (ctx->opcode2 & 0x0fff));
+                val = tcg_temp_new();
+                tcg_gen_qemu_ld_i32(val, addr, ctx->memidx, MO_UB);
+                assignbit = tcg_temp_new();
+                // assignbit = (0x00000001<<imm)&val
+                tcg_gen_andi_i32(assignbit, val, (1 << B6_4));
+                assignbit_expr = tcg_temp_new();
+                // assignbit_expr = (assignbit == 0)
+                tcg_gen_setcondi_i32(TCG_COND_EQ, assignbit_expr, assignbit, 0);
+                t_expr = tcg_temp_new();
+                // t_expr = (T==0)
+                tcg_gen_setcondi_i32(TCG_COND_EQ, t_expr, cpu_sr_t, 0);
+                expr1 = tcg_temp_new();
+                // expr1 = (t_expr && assignbit_expr)
+                tcg_gen_and_i32(expr1, t_expr, assignbit_expr);
+                // assignbit_expr = (assignbit != 0)
+                tcg_gen_setcondi_i32(TCG_COND_NE, assignbit_expr, assignbit, 0);
+                // t_expr = (T==1)
+                tcg_gen_setcondi_i32(TCG_COND_EQ, t_expr, cpu_sr_t, 1);
+                expr2 = tcg_temp_new();
+                // expr2 = (t_expr && assignbit_expr)
+                tcg_gen_and_i32(expr2, t_expr, assignbit_expr);
+                expr = tcg_temp_new();
+                // expr = (expr1 || expr2)
+                tcg_gen_or_i32(expr, expr1, expr2);
+                // T = (expr == 0) ? 1 : 0
+                tcg_gen_setcondi_i32(TCG_COND_EQ, cpu_sr_t, expr, 0);
+                tcg_temp_free(expr);
+                tcg_temp_free(expr2);
+                tcg_temp_free(expr1);
+                tcg_temp_free(t_expr);
+                tcg_temp_free(assignbit_expr);
+                tcg_temp_free(assignbit);
+                tcg_temp_free(val);
+                tcg_temp_free(addr);
+            }
+            return;
+        default:
+            ;
+        }
+        break;
     }
 
     switch (ctx->opcode & 0xf0ff) {
@@ -1826,6 +2494,153 @@ static void _decode_opc(DisasContext * ctx)
             return;
         }
         break;
+    case 0x408b:		/* mov.b R0,@Rn+ */
+fprintf(stderr, "mov.b 3 is not implemented\n");
+fflush(stderr);
+        return;
+    case 0x409b:		/* mob.w R0,@Rn+ */
+fprintf(stderr, "mov.w 3 is not implemented\n");
+fflush(stderr);
+        return;
+    case 0x40ab:		/* mov.l R0,@Rn+ */
+fprintf(stderr, "mov.l 3 is not implemented\n");
+fflush(stderr);
+        return;
+    case 0x40cb:		/* mov.b @-Rm,R0 */
+fprintf(stderr, "mov.b 4 is not implemented\n");
+fflush(stderr);
+        return;
+    case 0x40db:		/* mov.w @-Rm,R0 */
+fprintf(stderr, "mov.w 4 is not implemented\n");
+fflush(stderr);
+        return;
+    case 0x40eb:		/* mov.l @-Rm,R0 */
+fprintf(stderr, "mov.l 4 is not implemented\n");
+fflush(stderr);
+        return;
+    case 0x40f1:		/* movml.l Rm,@-R15 */
+fprintf(stderr, "movml.l 1 is not implemented\n");
+fflush(stderr);
+        return;
+    case 0x40f5:		/* movml.l @R15+,Rn */
+fprintf(stderr, "movml.l 2 is not implemented\n");
+fflush(stderr);
+        return;
+    case 0x40f0:		/* movmu.l Rm,@-R15 */
+        {
+            int i;
+            {
+                TCGv addr = tcg_temp_new();
+                tcg_gen_subi_i32(addr, REG(15), 4);
+                tcg_gen_qemu_st_i32(cpu_pr, addr, ctx->memidx, MO_TEUL);
+                tcg_gen_mov_i32(REG(15), addr);
+                tcg_temp_free(addr);
+            }
+            for (i = 14; i >= B11_8; i--)
+            {
+                TCGv addr = tcg_temp_new();
+                tcg_gen_subi_i32(addr, REG(15), 4);
+                tcg_gen_qemu_st_i32(REG(i), addr, ctx->memidx, MO_TEUL);
+                tcg_gen_mov_i32(REG(15), addr);
+                tcg_temp_free(addr);
+            }
+        }
+        return;
+    case 0x40f4:		/* movmu.l @R15+,Rn */
+fprintf(stderr, "movmu.l 2 is not implemented\n");
+fflush(stderr);
+        return;
+    case 0x0039:		/* movrt Rn */
+fprintf(stderr, "movrt is not implemented\n");
+fflush(stderr);
+        return;
+    case 0x4091:		/* clips.b Rn */
+fprintf(stderr, "clips.b is not implemented\n");
+fflush(stderr);
+        return;
+    case 0x4095:		/* clips.w Rn */
+fprintf(stderr, "clips.w is not implemented\n");
+fflush(stderr);
+        return;
+    case 0x4081:		/* clipu.b Rn */
+fprintf(stderr, "clipu.b is not implemented\n");
+fflush(stderr);
+        return;
+    case 0x4085:		/* clipu.w Rn */
+fprintf(stderr, "clipu.w is not implemented\n");
+fflush(stderr);
+        return;
+    case 0x4094:		/* divs R0,Rn */
+fprintf(stderr, "divs is not implemented\n");
+fflush(stderr);
+        return;
+    case 0x4084:		/* divu R0,Rn */
+fprintf(stderr, "divu is not implemented\n");
+fflush(stderr);
+        return;
+    case 0x4080:		/* mulr R0,Rn */
+fprintf(stderr, "mulr is not implemented\n");
+fflush(stderr);
+        return;
+    case 0x404b:		/* jsr/n @Rm */
+        tcg_gen_movi_i32(cpu_pr, ctx->base.pc_next + 4 - 2);
+	tcg_gen_mov_i32(cpu_pc, REG(B11_8));
+        if (ctx->base.singlestep_enabled) {
+            gen_helper_debug(cpu_env);
+        } else if (use_exit_tb(ctx)) {
+            tcg_gen_exit_tb(NULL, 0);
+        } else {
+            tcg_gen_lookup_and_goto_ptr();
+        }
+        ctx->base.is_jmp = DISAS_NORETURN;
+        return;
+    case 0x007b:		/* rtv/n Rm */
+fprintf(stderr, "rtv/n is not implemented\n");
+fflush(stderr);
+        return;
+    case 0x40e5:		/* ldbank @Rm,R0 */
+fprintf(stderr, "ldbank is not implemented\n");
+fflush(stderr);
+        return;
+    case 0x404a:		/* ldc Rm,TBR */
+fprintf(stderr, "ldc is not implemented\n");
+fflush(stderr);
+        return;
+    case 0x40e1:		/* stbank R0,@Rn */
+fprintf(stderr, "stbank is not implemented\n");
+fflush(stderr);
+        return;
+    case 0x004a:		/* stc TBR,Rn */
+fprintf(stderr, "stc is not implemented\n");
+fflush(stderr);
+        return;
+    }
+
+    switch (ctx->opcode & 0xff08) {
+    case 0x8600:		/* bclr #imm3,Rn */
+        tcg_gen_andi_i32(REG(B7_4), REG(B7_4), ~(1 << B2_0));
+        return;
+    case 0x8708:		/* bld #imm3,Rn */
+        {
+            TCGv val;
+            val = tcg_temp_new();
+            tcg_gen_andi_i32(val, REG(B7_4), (1 << B2_0));
+            tcg_gen_setcondi_i32(TCG_COND_NE, cpu_sr_t, val, 0);
+            tcg_temp_free(val);
+        }
+        return;
+    case 0x8608:		/* bset #imm3,Rn */
+        tcg_gen_ori_i32(REG(B7_4), REG(B7_4), (1 << B2_0));
+        return;
+    case 0x8700:		/* bst #imm3,Rn */
+        {
+            TCGv t_shift;
+            t_shift = tcg_temp_new();
+            tcg_gen_shli_i32(t_shift, cpu_sr_t, B2_0);
+            tcg_gen_andi_i32(REG(B7_4), REG(B7_4), ~(1 << B2_0));
+            tcg_gen_or_i32(REG(B7_4), REG(B7_4), t_shift);
+        }
+        return;
     }
 #if 0
     fprintf(stderr, "unknown instruction 0x%04x at pc 0x%08x\n",
@@ -2331,7 +3146,10 @@ static void sh4_tr_translate_insn(DisasContextBase *dcbase, CPUState *cs)
 #endif
 
     ctx->opcode = cpu_lduw_code(env, ctx->base.pc_next);
+    ctx->opcode2 = cpu_lduw_code(env, ctx->base.pc_next + 2);
     decode_opc(ctx);
+    if (is_32bit_instruction(ctx))
+        ctx->base.pc_next += 2;
     ctx->base.pc_next += 2;
 }
 

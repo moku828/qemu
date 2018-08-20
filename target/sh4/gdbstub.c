@@ -25,7 +25,75 @@
 /* Hint: Use "set architecture sh4" in GDB to see fpu registers */
 /* FIXME: We should use XML for this.  */
 
+int sh4_cpu_gdb_read_register(CPUState *cs, uint8_t *mem_buf, int n);
+int sh2a_cpu_gdb_read_register(CPUState *cs, uint8_t *mem_buf, int n);
+
 int superh_cpu_gdb_read_register(CPUState *cs, uint8_t *mem_buf, int n)
+{
+    SuperHCPU *cpu = SUPERH_CPU(cs);
+    CPUSH4State *env = &cpu->env;
+
+    switch (env->id)
+    {
+    case SH_CPU_SH7262:
+        return sh2a_cpu_gdb_read_register(cs, mem_buf, n);
+    default:
+        return sh4_cpu_gdb_read_register(cs, mem_buf, n);
+    }
+}
+
+int sh2a_cpu_gdb_read_register(CPUState *cs, uint8_t *mem_buf, int n)
+{
+    SuperHCPU *cpu = SUPERH_CPU(cs);
+    CPUSH4State *env = &cpu->env;
+
+    switch (n) {
+    case 0 ... 7:
+        if ((env->sr & (1u << SR_MD)) && (env->sr & (1u << SR_RB))) {
+            return gdb_get_regl(mem_buf, env->gregs[n + 16]);
+        } else {
+            return gdb_get_regl(mem_buf, env->gregs[n]);
+        }
+    case 8 ... 15:
+        return gdb_get_regl(mem_buf, env->gregs[n]);
+    case 16:
+        return gdb_get_regl(mem_buf, env->pc);
+    case 17:
+        return gdb_get_regl(mem_buf, env->pr);
+    case 18:
+        return gdb_get_regl(mem_buf, env->gbr);
+    case 19:
+        return gdb_get_regl(mem_buf, env->vbr);
+    case 20:
+        return gdb_get_regl(mem_buf, env->mach);
+    case 21:
+        return gdb_get_regl(mem_buf, env->macl);
+    case 22:
+        return gdb_get_regl(mem_buf, cpu_read_sr(env));
+    case 23:
+        return gdb_get_regl(mem_buf, env->fpul);
+    case 24:
+        return gdb_get_regl(mem_buf, env->fpscr);
+    case 25 ... 40:
+        stfl_p(mem_buf, env->fregs[n - 25]);
+        return 4;
+    case 41 ... 42:
+        return gdb_get_regl(mem_buf, 0);
+    case 43 ... 57:
+        return gdb_get_regl(mem_buf, env->gregs[n - 43]);
+    case 58 ... 62:
+        return gdb_get_regl(mem_buf, 0);
+    case 64 ... 67:
+        return gdb_get_regl(mem_buf, 0);
+    case 68 ... 75:
+        stfl_p(mem_buf, 0);
+        return 4;
+    }
+
+    return 0;
+}
+
+int sh4_cpu_gdb_read_register(CPUState *cs, uint8_t *mem_buf, int n)
 {
     SuperHCPU *cpu = SUPERH_CPU(cs);
     CPUSH4State *env = &cpu->env;
