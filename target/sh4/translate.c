@@ -2547,12 +2547,48 @@ fflush(stderr);
         tcg_gen_qemu_ld_i32(REG(0), REG(B11_8), ctx->memidx, MO_TESL);
         return;
     case 0x40f1:		/* movml.l Rm,@-R15 */
-fprintf(stderr, "movml.l 1 is not implemented\n");
-fflush(stderr);
+        {
+            int i;
+            for (i=B11_8; i >= 0; i--)
+            {
+                if (i==15)
+                {
+                    TCGv addr = tcg_temp_new();
+                    tcg_gen_subi_i32(addr, REG(15), 4);
+                    tcg_gen_qemu_st_i32(cpu_pr, addr, ctx->memidx, MO_TEUL);
+                    tcg_gen_mov_i32(REG(15), addr);
+                    tcg_temp_free(addr);
+                }
+                else
+                {
+                    TCGv addr = tcg_temp_new();
+                    tcg_gen_subi_i32(addr, REG(15), 4);
+                    tcg_gen_qemu_st_i32(REG(i), addr, ctx->memidx, MO_TEUL);
+                    tcg_gen_mov_i32(REG(15), addr);
+                    tcg_temp_free(addr);
+                }
+            }
+        }
         return;
     case 0x40f5:		/* movml.l @R15+,Rn */
-fprintf(stderr, "movml.l 2 is not implemented\n");
-fflush(stderr);
+        {
+            int i;
+            for (i = 0; i <= B11_8; i++)
+            {
+                TCGv addr = tcg_temp_new();
+                tcg_gen_mov_i32(addr, REG(15));
+                if (i==15)
+                {
+                    tcg_gen_qemu_ld_i32(cpu_pr, addr, ctx->memidx, MO_TEUL);
+                }
+                else
+                {
+                    tcg_gen_qemu_ld_i32(REG(i), addr, ctx->memidx, MO_TEUL);
+                }
+                tcg_gen_addi_i32(REG(15), addr, 4);
+                tcg_temp_free(addr);
+            }
+        }
         return;
     case 0x40f0:		/* movmu.l Rm,@-R15 */
         {
@@ -2575,12 +2611,27 @@ fflush(stderr);
         }
         return;
     case 0x40f4:		/* movmu.l @R15+,Rn */
-fprintf(stderr, "movmu.l 2 is not implemented\n");
-fflush(stderr);
+        {
+            int i;
+            for (i = B11_8; i <= 14; i++)
+            {
+                TCGv addr = tcg_temp_new();
+                tcg_gen_mov_i32(addr, REG(15));
+                tcg_gen_qemu_ld_i32(REG(i), addr, ctx->memidx, MO_TEUL);
+                tcg_gen_addi_i32(REG(15), addr, 4);
+                tcg_temp_free(addr);
+            }
+            {
+                TCGv addr = tcg_temp_new();
+                tcg_gen_mov_i32(addr, REG(15));
+                tcg_gen_qemu_ld_i32(cpu_pr, addr, ctx->memidx, MO_TEUL);
+                tcg_gen_addi_i32(REG(15), addr, 4);
+                tcg_temp_free(addr);
+            }
+        }
         return;
     case 0x0039:		/* movrt Rn */
-fprintf(stderr, "movrt is not implemented\n");
-fflush(stderr);
+        tcg_gen_setcondi_i32(TCG_COND_EQ, REG(B11_8), cpu_sr_t, 0);
         return;
     case 0x4091:		/* clips.b Rn */
 fprintf(stderr, "clips.b is not implemented\n");
