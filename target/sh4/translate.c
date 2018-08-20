@@ -1537,38 +1537,66 @@ fflush(stderr);
     case 0x3001:
         switch(ctx->opcode2 & 0xf000) {
         case 0x0000:		/* mov.b Rm,@(disp12,Rn) */
-fprintf(stderr, "mov.b 1 is not implemented\n");
-fflush(stderr);
+            {
+                TCGv addr = tcg_temp_new();
+                tcg_gen_addi_i32(addr, REG(B11_8), (ctx->opcode2 & 0x0fff) << 0);
+                tcg_gen_qemu_st_i32(REG(B7_4), addr, ctx->memidx, MO_UB);
+                tcg_temp_free(addr);
+            }
             return;
         case 0x1000:		/* mov.w Rm,@(disp12,Rn) */
-fprintf(stderr, "mov.w 1 is not implemented\n");
-fflush(stderr);
+            {
+                TCGv addr = tcg_temp_new();
+                tcg_gen_addi_i32(addr, REG(B11_8), (ctx->opcode2 & 0x0fff) << 1);
+                tcg_gen_qemu_st_i32(REG(B7_4), addr, ctx->memidx, MO_TEUW);
+                tcg_temp_free(addr);
+            }
             return;
         case 0x2000:		/* mov.l Rm,@(disp12,Rn) */
-fprintf(stderr, "mov.l 1 is not implemented\n");
-fflush(stderr);
+            {
+                TCGv addr = tcg_temp_new();
+                tcg_gen_addi_i32(addr, REG(B11_8), (ctx->opcode2 & 0x0fff) << 2);
+                tcg_gen_qemu_st_i32(REG(B7_4), addr, ctx->memidx, MO_TEUL);
+                tcg_temp_free(addr);
+            }
             return;
         case 0x4000:		/* mov.b @(disp12,Rm),Rn */
-fprintf(stderr, "mov.b 2 is not implemented\n");
-fflush(stderr);
+            {
+                TCGv addr = tcg_temp_new();
+                tcg_gen_addi_i32(addr, REG(B7_4), (ctx->opcode2 & 0x0fff) << 0);
+                tcg_gen_qemu_ld_i32(REG(B11_8), addr, ctx->memidx, MO_SB);
+                tcg_temp_free(addr);
+            }
             return;
         case 0x5000:		/* mov.w @(disp12,Rm),Rn */
-fprintf(stderr, "mov.w 2 is not implemented\n");
-fflush(stderr);
+            {
+                TCGv addr = tcg_temp_new();
+                tcg_gen_addi_i32(addr, REG(B7_4), (ctx->opcode2 & 0x0fff) << 1);
+                tcg_gen_qemu_ld_i32(REG(B11_8), addr, ctx->memidx, MO_TESW);
+                tcg_temp_free(addr);
+            }
             return;
         case 0x6000:		/* mov.l @(disp12,Rm),Rn */
-fprintf(stderr, "mov.l 2 is not implemented\n");
-fflush(stderr);
+            {
+                TCGv addr = tcg_temp_new();
+                tcg_gen_addi_i32(addr, REG(B7_4), (ctx->opcode2 & 0x0fff) << 2);
+                tcg_gen_qemu_ld_i32(REG(B11_8), addr, ctx->memidx, MO_TESL);
+                tcg_temp_free(addr);
+            }
             return;
         case 0x8000:		/* movu.b @(disp12,Rm),Rn */
-fprintf(stderr, "movu.b is not implemented\n");
-fflush(stderr);
+            {
+                TCGv addr = tcg_temp_new();
+                tcg_gen_addi_i32(addr, REG(B7_4), (ctx->opcode2 & 0x0fff) << 0);
+                tcg_gen_qemu_ld_i32(REG(B11_8), addr, ctx->memidx, MO_UB);
+                tcg_temp_free(addr);
+            }
             return;
         case 0x9000:		/* movu.w @(disp12,Rm),Rn */
             {
                 TCGv addr = tcg_temp_new();
                 tcg_gen_addi_i32(addr, REG(B7_4), (ctx->opcode2 & 0x0fff) << 1);
-                tcg_gen_qemu_ld_i32(REG(B11_8), addr, ctx->memidx, MO_UW);
+                tcg_gen_qemu_ld_i32(REG(B11_8), addr, ctx->memidx, MO_TEUW);
                 tcg_temp_free(addr);
             }
             return;
@@ -2495,28 +2523,28 @@ fflush(stderr);
         }
         break;
     case 0x408b:		/* mov.b R0,@Rn+ */
-fprintf(stderr, "mov.b 3 is not implemented\n");
-fflush(stderr);
+        tcg_gen_qemu_st_i32(REG(0), REG(B11_8), ctx->memidx, MO_UB);
+        tcg_gen_addi_i32(REG(B11_8), REG(B11_8), 1);
         return;
     case 0x409b:		/* mob.w R0,@Rn+ */
-fprintf(stderr, "mov.w 3 is not implemented\n");
-fflush(stderr);
+        tcg_gen_qemu_st_i32(REG(0), REG(B11_8), ctx->memidx, MO_TEUW);
+        tcg_gen_addi_i32(REG(B11_8), REG(B11_8), 2);
         return;
     case 0x40ab:		/* mov.l R0,@Rn+ */
-fprintf(stderr, "mov.l 3 is not implemented\n");
-fflush(stderr);
+        tcg_gen_qemu_st_i32(REG(0), REG(B11_8), ctx->memidx, MO_TEUL);
+        tcg_gen_addi_i32(REG(B11_8), REG(B11_8), 4);
         return;
     case 0x40cb:		/* mov.b @-Rm,R0 */
-fprintf(stderr, "mov.b 4 is not implemented\n");
-fflush(stderr);
+        tcg_gen_subi_i32(REG(B11_8), REG(B11_8), 1);
+        tcg_gen_qemu_ld_i32(REG(0), REG(B11_8), ctx->memidx, MO_SB);
         return;
     case 0x40db:		/* mov.w @-Rm,R0 */
-fprintf(stderr, "mov.w 4 is not implemented\n");
-fflush(stderr);
+        tcg_gen_subi_i32(REG(B11_8), REG(B11_8), 2);
+        tcg_gen_qemu_ld_i32(REG(0), REG(B11_8), ctx->memidx, MO_TESW);
         return;
     case 0x40eb:		/* mov.l @-Rm,R0 */
-fprintf(stderr, "mov.l 4 is not implemented\n");
-fflush(stderr);
+        tcg_gen_subi_i32(REG(B11_8), REG(B11_8), 4);
+        tcg_gen_qemu_ld_i32(REG(0), REG(B11_8), ctx->memidx, MO_TESL);
         return;
     case 0x40f1:		/* movml.l Rm,@-R15 */
 fprintf(stderr, "movml.l 1 is not implemented\n");
