@@ -83,8 +83,10 @@ int sh2a_cpu_gdb_read_register(CPUState *cs, uint8_t *mem_buf, int n)
         return gdb_get_regl(mem_buf, env->gregs[n - 43]);
     case 58 ... 62:
         return gdb_get_regl(mem_buf, 0);
-    case 64 ... 67:
+    case 64 ... 66:
         return gdb_get_regl(mem_buf, 0);
+    case 67:
+        return gdb_get_regl(mem_buf, env->tbr);
     case 68 ... 75:
         stfl_p(mem_buf, 0);
         return 4;

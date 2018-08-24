@@ -159,6 +159,7 @@ typedef struct CPUSH4State {
     uint32_t spc;		/* saved program counter */
     uint32_t gbr;		/* global base register */
     uint32_t vbr;		/* vector base register */
+    uint32_t tbr;		/* jump table base register */
     uint32_t sgr;		/* saved global register 15 */
     uint32_t dbr;		/* debug base register */
     uint32_t pc;		/* program counter */

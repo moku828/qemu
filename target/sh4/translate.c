@@ -64,7 +64,7 @@ typedef struct DisasContext {
 static TCGv cpu_gregs[32];
 static TCGv cpu_sr, cpu_sr_m, cpu_sr_q, cpu_sr_t;
 static TCGv cpu_pc, cpu_ssr, cpu_spc, cpu_gbr;
-static TCGv cpu_vbr, cpu_sgr, cpu_dbr, cpu_mach, cpu_macl;
+static TCGv cpu_vbr, cpu_tbr, cpu_sgr, cpu_dbr, cpu_mach, cpu_macl;
 static TCGv cpu_pr, cpu_fpscr, cpu_fpul;
 static TCGv cpu_lock_addr, cpu_lock_value;
 static TCGv cpu_fregs[32];
@@ -120,6 +120,8 @@ void sh4_translate_init(void)
                                      offsetof(CPUSH4State, gbr), "GBR");
     cpu_vbr = tcg_global_mem_new_i32(cpu_env,
                                      offsetof(CPUSH4State, vbr), "VBR");
+    cpu_tbr = tcg_global_mem_new_i32(cpu_env,
+                                     offsetof(CPUSH4State, tbr), "TBR");
     cpu_sgr = tcg_global_mem_new_i32(cpu_env,
                                      offsetof(CPUSH4State, sgr), "SGR");
     cpu_dbr = tcg_global_mem_new_i32(cpu_env,
@@ -167,6 +169,8 @@ void superh_cpu_dump_state(CPUState *cs, FILE *f,
                 env->pc, cpu_read_sr(env), env->pr, env->fpscr);
     cpu_fprintf(f, "spc=0x%08x ssr=0x%08x gbr=0x%08x vbr=0x%08x\n",
 		env->spc, env->ssr, env->gbr, env->vbr);
+    cpu_fprintf(f, "tbr=0x%08x\n",
+		env->tbr);
     cpu_fprintf(f, "sgr=0x%08x dbr=0x%08x delayed_pc=0x%08x fpul=0x%08x\n",
 		env->sgr, env->dbr, env->delayed_pc, env->fpul);
     for (i = 0; i < 24; i += 4) {
@@ -1807,8 +1811,25 @@ fflush(stderr);
 	}
 	return;
     case 0x8300:		/* jsr/n @@(disp8,TBR) */
-fprintf(stderr, "jsr/n is not implemented\n");
-fflush(stderr);
+        {
+	    TCGv addr, val;
+	    addr = tcg_temp_new();
+	    tcg_gen_addi_i32(addr, cpu_tbr, (B7_0 << 2));
+	    val = tcg_temp_new();
+            tcg_gen_qemu_ld_i32(val, addr, ctx->memidx, MO_TEUL);
+            tcg_gen_movi_i32(cpu_pr, ctx->base.pc_next + 4 - 2);
+	    tcg_gen_mov_i32(cpu_pc, val);
+            if (ctx->base.singlestep_enabled) {
+                gen_helper_debug(cpu_env);
+            } else if (use_exit_tb(ctx)) {
+                tcg_gen_exit_tb(NULL, 0);
+            } else {
+                tcg_gen_lookup_and_goto_ptr();
+            }
+            ctx->base.is_jmp = DISAS_NORETURN;
+	    tcg_temp_free(val);
+	    tcg_temp_free(addr);
+        }
         return;
     }
 
@@ -2681,16 +2702,14 @@ fprintf(stderr, "ldbank is not implemented\n");
 fflush(stderr);
         return;
     case 0x404a:		/* ldc Rm,TBR */
-fprintf(stderr, "ldc is not implemented\n");
-fflush(stderr);
+	tcg_gen_mov_i32(cpu_tbr, REG(B11_8));
         return;
     case 0x40e1:		/* stbank R0,@Rn */
 fprintf(stderr, "stbank is not implemented\n");
 fflush(stderr);
         return;
     case 0x004a:		/* stc TBR,Rn */
-fprintf(stderr, "stc is not implemented\n");
-fflush(stderr);
+	tcg_gen_mov_i32(REG(B11_8), cpu_tbr);
         return;
     }
 
