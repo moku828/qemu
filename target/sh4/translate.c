@@ -1609,12 +1609,38 @@ fflush(stderr);
             }
             return;
         case 0x7000:		/* fmov @(disp12,Rm),{F,D}Rn */
-fprintf(stderr, "fmov 1 is not implemented\n");
-fflush(stderr);
+            CHECK_FPU_ENABLED
+            if (ctx->tbflags & FPSCR_SZ) {
+                TCGv addr = tcg_temp_new();
+                TCGv_i64 fp = tcg_temp_new_i64();
+                tcg_gen_addi_i32(addr, REG(B7_4), (ctx->opcode2 & 0x0fff) << 3);
+                tcg_gen_qemu_ld_i64(fp, addr, ctx->memidx, MO_TEQ);
+                gen_store_fpr64(ctx, fp, XHACK(B11_8));
+                tcg_temp_free_i64(fp);
+                tcg_temp_free(addr);
+            } else {
+                TCGv addr = tcg_temp_new();
+                tcg_gen_addi_i32(addr, REG(B7_4), (ctx->opcode2 & 0x0fff) << 2);
+                tcg_gen_qemu_ld_i32(FREG(B11_8), addr, ctx->memidx, MO_TEUL);
+                tcg_temp_free(addr);
+            }
             return;
         case 0x3000:		/* fmov {F,D}Rm,@(disp12,Rn) */
-fprintf(stderr, "fmov 2 is not implemented\n");
-fflush(stderr);
+            CHECK_FPU_ENABLED
+            if (ctx->tbflags & FPSCR_SZ) {
+                TCGv addr = tcg_temp_new();
+                TCGv_i64 fp = tcg_temp_new_i64();
+                tcg_gen_addi_i32(addr, REG(B11_8), (ctx->opcode2 & 0x0fff) << 3);
+                gen_load_fpr64(ctx, fp, XHACK(B7_4));
+                tcg_gen_qemu_st_i64(fp, addr, ctx->memidx, MO_TEQ);
+                tcg_temp_free_i64(fp);
+                tcg_temp_free(addr);
+            } else {
+                TCGv addr = tcg_temp_new();
+                tcg_gen_addi_i32(addr, REG(B11_8), (ctx->opcode2 & 0x0fff) << 2);
+                tcg_gen_qemu_st_i32(FREG(B7_4), addr, ctx->memidx, MO_TEUL);
+                tcg_temp_free(addr);
+            }
             return;
         default:
             ;
