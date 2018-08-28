@@ -2808,8 +2808,16 @@ fflush(stderr);
         ctx->base.is_jmp = DISAS_NORETURN;
         return;
     case 0x007b:		/* rtv/n Rm */
-fprintf(stderr, "rtv/n is not implemented\n");
-fflush(stderr);
+	tcg_gen_mov_i32(REG(0), REG(B11_8));
+	tcg_gen_mov_i32(cpu_pc, cpu_pr);
+        if (ctx->base.singlestep_enabled) {
+            gen_helper_debug(cpu_env);
+        } else if (use_exit_tb(ctx)) {
+            tcg_gen_exit_tb(NULL, 0);
+        } else {
+            tcg_gen_lookup_and_goto_ptr();
+        }
+        ctx->base.is_jmp = DISAS_NORETURN;
         return;
     case 0x40e5:		/* ldbank @Rm,R0 */
 fprintf(stderr, "ldbank is not implemented\n");
