@@ -2767,8 +2767,7 @@ fflush(stderr);
         gen_helper_divu(REG(B11_8), cpu_env, REG(B11_8), REG(0));
         return;
     case 0x4080:		/* mulr R0,Rn */
-fprintf(stderr, "mulr is not implemented\n");
-fflush(stderr);
+	tcg_gen_mul_i32(REG(B11_8), REG(0), REG(B11_8));
         return;
     case 0x404b:		/* jsr/n @Rm */
         tcg_gen_movi_i32(cpu_pr, ctx->base.pc_next + 4 - 2);
