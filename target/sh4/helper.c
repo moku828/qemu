@@ -20,6 +20,7 @@
 
 #include "cpu.h"
 #include "exec/exec-all.h"
+#include "exec/cpu_ldst.h"
 #include "exec/log.h"
 #include "sysemu/sysemu.h"
 
@@ -158,6 +159,12 @@ void superh_cpu_do_interrupt(CPUState *cs)
 	case 0x160:
 	    expname = "trapa";
 	    break;
+	case 0xf00:
+	    expname = "divide_expection_divided_by_0";
+	    break;
+	case 0xf10:
+	    expname = "divide_expection_overflow";
+	    break;
 	default:
             expname = do_irq ? "interrupt" : "???";
             break;
@@ -171,6 +178,8 @@ void superh_cpu_do_interrupt(CPUState *cs)
     env->spc = env->pc;
     env->sgr = env->gregs[15];
     env->sr |= (1u << SR_BL) | (1u << SR_MD) | (1u << SR_RB);
+    if (env->id == SH_CPU_SH7262)
+        env->sr &= ~((1u << SR_RB) | (1u << SR_BL));
     env->lock_addr = -1;
 
     if (env->flags & DELAY_SLOT_MASK) {
@@ -193,6 +202,12 @@ void superh_cpu_do_interrupt(CPUState *cs)
         case 0x040:
         case 0x060:
             env->pc = env->vbr + 0x400;
+            break;
+        case 0xf00:
+            env->pc = cpu_ldl_code(env, env->vbr + 0x044) - 2;
+            break;
+        case 0xf10:
+            env->pc = cpu_ldl_code(env, env->vbr + 0x048) - 2;
             break;
         case 0x160:
             env->spc += 2; /* special case for TRAPA */

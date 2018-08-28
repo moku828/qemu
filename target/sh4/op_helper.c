@@ -502,3 +502,25 @@ void helper_ftrv(CPUSH4State *env, uint32_t n)
         env->fregs[bank_vector + i] = r[i];
     }
 }
+
+int32_t helper_divs(CPUSH4State *env, int32_t t0, int32_t t1)
+{
+    if (t1==0) {
+        raise_exception(env, 0xf00, 0);
+    } else if ((t0==INT32_MIN)&&(t1==-1)) {
+        raise_exception(env, 0xf10, 0);
+    } else {
+        t0 = t0 / t1;
+    }
+    return t0;
+}
+
+uint32_t helper_divu(CPUSH4State *env, uint32_t t0, uint32_t t1)
+{
+    if (t1==0) {
+        raise_exception(env, 0xf00, 0);
+    } else {
+        t0 = t0 / t1;
+    }
+    return t0;
+}
