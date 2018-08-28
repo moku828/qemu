@@ -2761,16 +2761,10 @@ fflush(stderr);
 	}
         return;
     case 0x4094:		/* divs R0,Rn */
-        /* TODO: impl. for overflow exception 0x80000000 divided by -1 */
-        /* TODO: impl. for exception divided by 0 */
         gen_helper_divs(REG(B11_8), cpu_env, REG(B11_8), REG(0));
-        /*tcg_gen_div_i32(REG(B11_8), REG(B11_8), REG(0));*/
         return;
     case 0x4084:		/* divu R0,Rn */
-        /* TODO: impl. for exception divided by 0 */
         gen_helper_divu(REG(B11_8), cpu_env, REG(B11_8), REG(0));
-        /*tcg_gen_divu_i32(REG(B11_8), REG(B11_8), REG(0));*/
-        /*gen_helper_raise_divide_exception_divided_by_0(cpu_env);*/
         return;
     case 0x4080:		/* mulr R0,Rn */
 fprintf(stderr, "mulr is not implemented\n");
