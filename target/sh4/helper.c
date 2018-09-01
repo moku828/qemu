@@ -229,6 +229,10 @@ void superh_cpu_do_interrupt(CPUState *cs)
     if (do_irq) {
         env->intevt = irq_vector;
         env->pc = env->vbr + 0x600;
+        if (env->id == SH_CPU_SH7262) {
+            env->pc = cpu_ldl_code(env, env->vbr + irq_vector * 4) - 2;
+            cpu_reset_interrupt(cs, CPU_INTERRUPT_HARD);
+        }
         return;
     }
 }

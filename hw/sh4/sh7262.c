@@ -31,6 +31,8 @@
 #include "exec/exec-all.h"
 #include "hw/ssi/ssi.h"
 #include "sh7262_regs.h"
+#include "hw/sh4/sh_intc.h"
+#include "chardev/char-fe.h"
 
 typedef struct {
   uint32_t sprx[8];
@@ -53,6 +55,7 @@ typedef struct SH7262State {
     /* Bus, controller */
     SSIBus *spi;
     SH7262_RSPI rspi[2];
+    struct intc_desc intc;
 } SH7262State;
 
 uint32_t sh7262_spdr_read(SH7262State *s, unsigned ch)
@@ -150,6 +153,109 @@ static const MemoryRegionOps sh7262_peripheral_ops = {
     .endianness = DEVICE_NATIVE_ENDIAN,
 };
 
+enum {
+	UNUSED = 0,
+
+	/* interrupt sources */
+	IRQ0, IRQ1, IRQ2, IRQ3,
+	IRQ4, IRQ5, IRQ6, IRQ7,
+
+	/* interrupt groups */
+
+	NR_SOURCES,
+};
+
+static struct intc_vect vectors[] = {
+	INTC_VECT(IRQ0, 64), INTC_VECT(IRQ1, 65),
+	INTC_VECT(IRQ2, 66), INTC_VECT(IRQ3, 67),
+	INTC_VECT(IRQ4, 68), INTC_VECT(IRQ5, 69),
+	INTC_VECT(IRQ6, 70), INTC_VECT(IRQ7, 71),
+};
+
+static struct intc_group groups[] = {
+};
+
+static struct intc_prio_reg prio_registers[] = {
+};
+
+static struct intc_mask_reg mask_registers[] = {
+};
+
+typedef struct {
+    CharBackend chr;
+
+    qemu_irq irq0;
+    qemu_irq irq1;
+    qemu_irq irq2;
+    qemu_irq irq3;
+    qemu_irq irq4;
+    qemu_irq irq5;
+    qemu_irq irq6;
+    qemu_irq irq7;
+} sh7262_irq_state;
+
+static int sh7262_irq_can_receive1(void *opaque)
+{
+    return 8;
+}
+
+static void sh7262_irq_receive1(void *opaque, const uint8_t *buf, int size)
+{
+    sh7262_irq_state *s = opaque;
+
+    if (size>4)
+    {
+        if (memcmp(buf,"irq0",4)==0) {
+            qemu_set_irq(s->irq0, 1);
+        } else if (memcmp(buf,"irq1",4)==0) {
+            qemu_set_irq(s->irq1, 1);
+        } else if (memcmp(buf,"irq2",4)==0) {
+            qemu_set_irq(s->irq2, 1);
+        } else if (memcmp(buf,"irq3",4)==0) {
+            qemu_set_irq(s->irq3, 1);
+        } else if (memcmp(buf,"irq4",4)==0) {
+            qemu_set_irq(s->irq4, 1);
+        } else if (memcmp(buf,"irq5",4)==0) {
+            qemu_set_irq(s->irq5, 1);
+        } else if (memcmp(buf,"irq6",4)==0) {
+            qemu_set_irq(s->irq6, 1);
+        } else if (memcmp(buf,"irq7",4)==0) {
+            qemu_set_irq(s->irq7, 1);
+        }
+    }
+}
+
+void sh7262_irq_init(Chardev *chr,
+                    qemu_irq irq0_source,
+                    qemu_irq irq1_source,
+                    qemu_irq irq2_source,
+                    qemu_irq irq3_source,
+                    qemu_irq irq4_source,
+                    qemu_irq irq5_source,
+                    qemu_irq irq6_source,
+                    qemu_irq irq7_source)
+{
+    sh7262_irq_state *s;
+
+    s = g_malloc0(sizeof(sh7262_irq_state));
+
+    if (chr) {
+        qemu_chr_fe_init(&s->chr, chr, &error_abort);
+        qemu_chr_fe_set_handlers(&s->chr, sh7262_irq_can_receive1,
+                                 sh7262_irq_receive1,
+                                 NULL, NULL, s, NULL, true);
+    }
+
+    s->irq0 = irq0_source;
+    s->irq1 = irq1_source;
+    s->irq2 = irq2_source;
+    s->irq3 = irq3_source;
+    s->irq4 = irq4_source;
+    s->irq5 = irq5_source;
+    s->irq6 = irq6_source;
+    s->irq7 = irq7_source;
+}
+
 SH7262State *sh7262_init(SuperHCPU *cpu, MemoryRegion *sysmem)
 {
     SH7262State *s;
@@ -187,6 +293,26 @@ SH7262State *sh7262_init(SuperHCPU *cpu, MemoryRegion *sysmem)
     memory_region_init_alias(&s->peripheral_fffc, NULL, "peripheral-fffc",
                              &s->peripheral, 0xFFFC0000, 0x40000);
     memory_region_add_subregion(sysmem, 0xFFFC0000, &s->peripheral_fffc);
+
+    sh_intc_init(sysmem, &s->intc, NR_SOURCES,
+		 _INTC_ARRAY(mask_registers),
+		 _INTC_ARRAY(prio_registers));
+
+    sh_intc_register_sources(&s->intc,
+			     _INTC_ARRAY(vectors),
+			     _INTC_ARRAY(groups));
+
+    cpu->env.intc_handle = &s->intc;
+
+    sh7262_irq_init(serial_hd(0),
+                   s->intc.irqs[IRQ0],
+                   s->intc.irqs[IRQ1],
+                   s->intc.irqs[IRQ2],
+                   s->intc.irqs[IRQ3],
+                   s->intc.irqs[IRQ4],
+                   s->intc.irqs[IRQ5],
+                   s->intc.irqs[IRQ6],
+                   s->intc.irqs[IRQ7]);
 
     // SPI bus
     s->spi = ssi_create_bus(NULL, "spi");
