@@ -524,3 +524,36 @@ uint32_t helper_divu(CPUSH4State *env, uint32_t t0, uint32_t t1)
     }
     return t0;
 }
+
+void helper_resbank(CPUSH4State *env)
+{
+    int i;
+
+    if (env->bn <= env->bn_max) {
+        if (env->bn > 0) {
+            env->bn--;
+        } else {
+            // TODO bank underflow
+        }
+        env->pr = env->regbank[18][env->bn];
+        env->gbr = env->regbank[17][env->bn];
+        env->macl = env->regbank[16][env->bn];
+        env->mach = env->regbank[15][env->bn];
+        for (i = 14; i >= 0; i--) {
+            env->gregs[i] = env->regbank[i][env->bn];
+        }
+    } else {
+        for (i = 0; i <= 14; i++) {
+            env->gregs[i] = cpu_ldl_code(env, env->gregs[15]);
+            env->gregs[15] += 4;
+        }
+        env->pr = cpu_ldl_code(env, env->gregs[15]);
+        env->gregs[15] += 4;
+        env->gbr = cpu_ldl_code(env, env->gregs[15]);
+        env->gregs[15] += 4;
+        env->mach = cpu_ldl_code(env, env->gregs[15]);
+        env->gregs[15] += 4;
+        env->macl = cpu_ldl_code(env, env->gregs[15]);
+        env->gregs[15] += 4;
+    }
+}

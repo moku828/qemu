@@ -875,8 +875,7 @@ static void _decode_opc(DisasContext * ctx)
         ctx->base.is_jmp = DISAS_NORETURN;
         return;
     case 0x005b:		/* resbank */
-fprintf(stderr, "resbank is not implemented\n");
-fflush(stderr);
+        gen_helper_resbank(cpu_env);
         return;
     }
 

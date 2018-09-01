@@ -264,6 +264,8 @@ SH7262State *sh7262_init(SuperHCPU *cpu, MemoryRegion *sysmem)
     s = g_malloc0(sizeof(SH7262State));
     s->cpu = cpu;
 
+    cpu->env.bn_max = 14;
+
     // Internal ROM for Boot startup
     memory_region_init_ram(&s->bootrom, NULL, "bootrom", 0x10000, &error_fatal);
     memory_region_set_readonly(&s->bootrom, true);

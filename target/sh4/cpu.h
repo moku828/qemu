@@ -172,6 +172,9 @@ typedef struct CPUSH4State {
     uint32_t mach;		/* multiply and accumulate high */
     uint32_t macl;		/* multiply and accumulate low */
     uint32_t pr;		/* procedure register */
+    uint32_t regbank[20][15];   /* register bank */
+    uint32_t bn;		/* bank number */
+    uint32_t bn_max;		/* max. bank number */
     uint32_t fpscr;		/* floating point status/control register */
     uint32_t fpul;		/* floating point communication register */
 
