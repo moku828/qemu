@@ -165,6 +165,9 @@ void superh_cpu_do_interrupt(CPUState *cs)
 	case 0xf10:
 	    expname = "divide_expection_overflow";
 	    break;
+	case 0xf20:
+	    expname = "nmi";
+	    break;
 	default:
             expname = do_irq ? "interrupt" : "???";
             break;
@@ -208,6 +211,10 @@ void superh_cpu_do_interrupt(CPUState *cs)
             break;
         case 0xf10:
             env->pc = cpu_ldl_code(env, env->vbr + 0x048) - 2;
+            break;
+        case 0xf20:
+            env->pc = cpu_ldl_code(env, env->vbr + 0x02c);
+            cpu_reset_interrupt(cs, CPU_INTERRUPT_NMI);
             break;
         case 0x160:
             env->spc += 2; /* special case for TRAPA */
@@ -903,6 +910,11 @@ bool superh_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
             superh_cpu_do_interrupt(cs);
             return true;
         }
+    }
+    if (interrupt_request & CPU_INTERRUPT_NMI) {
+        cs->exception_index = 0xf20;
+        superh_cpu_do_interrupt(cs);
+        return true;
     }
     return false;
 }

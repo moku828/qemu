@@ -26,6 +26,7 @@
 #include "migration/vmstate.h"
 #include "exec/exec-all.h"
 #include "fpu/softfloat.h"
+#include "hw/nmi.h"
 
 
 static void superh_cpu_set_pc(CPUState *cs, vaddr value)
@@ -240,11 +241,24 @@ static const VMStateDescription vmstate_sh_cpu = {
     .unmigratable = 1,
 };
 
+static void superh_cpu_nmi(NMIState *n, int cpu_index, Error **errp)
+{
+    /* cpu index isn't used */
+    CPUState *cs;
+
+    CPU_FOREACH(cs) {
+        SuperHCPU *cpu = SUPERH_CPU(cs);
+
+        cpu_interrupt(cs, CPU_INTERRUPT_NMI);
+    }
+}
+
 static void superh_cpu_class_init(ObjectClass *oc, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(oc);
     CPUClass *cc = CPU_CLASS(oc);
     SuperHCPUClass *scc = SUPERH_CPU_CLASS(oc);
+    NMIClass *nc = NMI_CLASS(oc);
 
     device_class_set_parent_realize(dc, superh_cpu_realizefn,
                                     &scc->parent_realize);
@@ -273,6 +287,8 @@ static void superh_cpu_class_init(ObjectClass *oc, void *data)
     cc->gdb_num_core_regs = 68;
 
     dc->vmsd = &vmstate_sh_cpu;
+
+    nc->nmi_monitor_handler = superh_cpu_nmi;
 }
 
 #define DEFINE_SUPERH_CPU_TYPE(type_name, cinit, initfn) \
@@ -291,6 +307,10 @@ static const TypeInfo superh_cpu_type_infos[] = {
         .abstract = true,
         .class_size = sizeof(SuperHCPUClass),
         .class_init = superh_cpu_class_init,
+        .interfaces = (InterfaceInfo[]) {
+             { TYPE_NMI },
+             { }
+        },
     },
     DEFINE_SUPERH_CPU_TYPE(TYPE_SH7750R_CPU, sh7750r_class_init,
                            sh7750r_cpu_initfn),

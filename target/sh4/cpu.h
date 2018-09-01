@@ -39,6 +39,8 @@
 
 #define CPUArchState struct CPUSH4State
 
+#define CPU_INTERRUPT_NMI       CPU_INTERRUPT_TGT_EXT_3
+
 #include "exec/cpu-defs.h"
 
 #define TARGET_PAGE_BITS 12	/* 4k XXXXX */
