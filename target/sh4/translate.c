@@ -62,7 +62,7 @@ typedef struct DisasContext {
 
 /* global register indexes */
 static TCGv cpu_gregs[32];
-static TCGv cpu_sr, cpu_sr_m, cpu_sr_q, cpu_sr_t, cpu_sr_cs;
+static TCGv cpu_sr, cpu_sr_m, cpu_sr_q, cpu_sr_t, cpu_sr_cs, cpu_sr_bo;
 static TCGv cpu_pc, cpu_ssr, cpu_spc, cpu_gbr;
 static TCGv cpu_vbr, cpu_tbr, cpu_sgr, cpu_dbr, cpu_mach, cpu_macl;
 static TCGv cpu_pr, cpu_fpscr, cpu_fpul;
@@ -114,6 +114,8 @@ void sh4_translate_init(void)
                                       offsetof(CPUSH4State, sr_t), "SR_T");
     cpu_sr_cs = tcg_global_mem_new_i32(cpu_env,
                                        offsetof(CPUSH4State, sr_cs), "SR_CS");
+    cpu_sr_bo = tcg_global_mem_new_i32(cpu_env,
+                                       offsetof(CPUSH4State, sr_bo), "SR_BO");
     cpu_ssr = tcg_global_mem_new_i32(cpu_env,
                                      offsetof(CPUSH4State, ssr), "SSR");
     cpu_spc = tcg_global_mem_new_i32(cpu_env,
@@ -203,6 +205,8 @@ static void gen_read_sr(TCGv dst)
     tcg_gen_or_i32(dst, cpu_sr, t0);
     tcg_gen_shli_i32(t0, cpu_sr_cs, SR_CS);
     tcg_gen_or_i32(dst, cpu_sr, t0);
+    tcg_gen_shli_i32(t0, cpu_sr_bo, SR_BO);
+    tcg_gen_or_i32(dst, cpu_sr, t0);
     tcg_temp_free_i32(t0);
 }
 
@@ -214,6 +218,7 @@ static void gen_write_sr(TCGv src)
     tcg_gen_extract_i32(cpu_sr_m, src, SR_M, 1);
     tcg_gen_extract_i32(cpu_sr_t, src, SR_T, 1);
     tcg_gen_extract_i32(cpu_sr_cs, src, SR_CS, 1);
+    tcg_gen_extract_i32(cpu_sr_bo, src, SR_BO, 1);
 }
 
 static inline void gen_save_cpu_state(DisasContext *ctx, bool save_pc)

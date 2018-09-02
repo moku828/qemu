@@ -254,6 +254,7 @@ void superh_cpu_do_interrupt(CPUState *cs)
                     env->gregs[15] -= 4;
                     cpu_stl_data(env, env->gregs[15], env->gregs[i]);
                 }
+                env->sr |= (1u << SR_BO);
             }
             env->pc = cpu_ldl_code(env, env->vbr + irq_vector * 4) - 2;
             cpu_reset_interrupt(cs, CPU_INTERRUPT_HARD);

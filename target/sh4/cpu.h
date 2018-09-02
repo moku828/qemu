@@ -56,6 +56,7 @@
 #define SR_RB 29
 #define SR_BL 28
 #define SR_FD 15
+#define SR_BO 14
 #define SR_CS 13
 #define SR_M  9
 #define SR_Q  8
@@ -159,6 +160,7 @@ typedef struct CPUSH4State {
     uint32_t sr_q;              /* Q bit of status register */
     uint32_t sr_t;              /* T bit of status register */
     uint32_t sr_cs;             /* CS bit of status register */
+    uint32_t sr_bo;             /* BO bit of status register */
     uint32_t ssr;		/* saved status register */
     uint32_t spc;		/* saved program counter */
     uint32_t gbr;		/* global base register */
@@ -400,7 +402,8 @@ static inline target_ulong cpu_read_sr(CPUSH4State *env)
     return env->sr | (env->sr_m << SR_M) |
                      (env->sr_q << SR_Q) |
                      (env->sr_t << SR_T) |
-                     (env->sr_cs << SR_CS);
+                     (env->sr_cs << SR_CS) |
+                     (env->sr_bo << SR_BO);
 }
 
 static inline void cpu_write_sr(CPUSH4State *env, target_ulong sr)
@@ -409,7 +412,8 @@ static inline void cpu_write_sr(CPUSH4State *env, target_ulong sr)
     env->sr_q = (sr >> SR_Q) & 1;
     env->sr_t = (sr >> SR_T) & 1;
     env->sr_cs = (sr >> SR_CS) & 1;
-    env->sr = sr & ~((1u << SR_M) | (1u << SR_Q) | (1u << SR_T) | (1u << SR_CS));
+    env->sr_bo = (sr >> SR_BO) & 1;
+    env->sr = sr & ~((1u << SR_M) | (1u << SR_Q) | (1u << SR_T) | (1u << SR_CS) | (1u << SR_BO));
 }
 
 static inline void cpu_get_tb_cpu_state(CPUSH4State *env, target_ulong *pc,

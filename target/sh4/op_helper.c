@@ -529,7 +529,7 @@ void helper_resbank(CPUSH4State *env)
 {
     int i;
 
-    if (env->bn <= env->bn_max) {
+    if (env->sr_bo == 0) {
         if (env->bn > 0) {
             env->bn--;
         } else {
