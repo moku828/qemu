@@ -48,3 +48,4 @@ DEF_HELPER_FLAGS_3(divu, TCG_CALL_NO_WG, i32, env, i32, i32)
 
 DEF_HELPER_1(resbank, void, env)
 DEF_HELPER_2(ldbank, void, env, i32)
+DEF_HELPER_2(stbank, void, env, i32)

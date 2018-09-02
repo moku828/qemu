@@ -2835,8 +2835,12 @@ static void _decode_opc(DisasContext * ctx)
 	tcg_gen_mov_i32(cpu_tbr, REG(B11_8));
         return;
     case 0x40e1:		/* stbank R0,@Rn */
-fprintf(stderr, "stbank is not implemented\n");
-fflush(stderr);
+	{
+	    TCGv val = tcg_temp_new();
+            tcg_gen_qemu_ld_i32(val, REG(B11_8), ctx->memidx, MO_TEUL);
+            gen_helper_stbank(cpu_env,val);
+	    tcg_temp_free(val);
+        }
         return;
     case 0x004a:		/* stc TBR,Rn */
 	tcg_gen_mov_i32(REG(B11_8), cpu_tbr);
