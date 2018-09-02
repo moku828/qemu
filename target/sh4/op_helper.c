@@ -557,3 +557,18 @@ void helper_resbank(CPUSH4State *env)
         env->gregs[15] += 4;
     }
 }
+
+void helper_ldbank(CPUSH4State *env, uint32_t val)
+{
+    int bn, en;
+    bn = (val >> 7) & 0x1ff;
+    en = (val >> 2) & 0x1f;
+    switch (en) {
+    case 0 ... 15:
+        env->gregs[0] = env->regbank[en][bn];
+        break;
+    case 16 ... 19:
+        env->gregs[0] = env->regbank[16 + (19 - en)][bn];
+        break;
+    }
+}

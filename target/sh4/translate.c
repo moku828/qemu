@@ -2824,8 +2824,12 @@ static void _decode_opc(DisasContext * ctx)
         ctx->base.is_jmp = DISAS_NORETURN;
         return;
     case 0x40e5:		/* ldbank @Rm,R0 */
-fprintf(stderr, "ldbank is not implemented\n");
-fflush(stderr);
+	{
+	    TCGv val = tcg_temp_new();
+            tcg_gen_qemu_ld_i32(val, REG(B11_8), ctx->memidx, MO_TEUL);
+            gen_helper_ldbank(cpu_env,val);
+	    tcg_temp_free(val);
+        }
         return;
     case 0x404a:		/* ldc Rm,TBR */
 	tcg_gen_mov_i32(cpu_tbr, REG(B11_8));
