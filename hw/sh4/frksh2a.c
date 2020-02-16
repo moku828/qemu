@@ -52,6 +52,8 @@ static void frksh2a_init(MachineState *machine)
     qdev_prop_set_drive(dev, "drive", blk_by_legacy_dinfo(dinfo), &error_fatal);
     qdev_init_nofail(dev);
 
+    dev = ssi_create_slave(sh7262_get_spi_bus(s), "ssi-sd");
+
 }
 
 static void frksh2a_machine_init(MachineClass *mc)
