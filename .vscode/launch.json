@@ -1,0 +1,41 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug with qemu within Docker",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/build/qemu/build/sh4eb-softmmu/qemu-system-sh4eb",
+            "args": [
+                "-drive", "file=SPIROM.IMG,if=mtd,format=raw"
+            ],
+            "stopAtEntry": true,
+            "cwd": "/build/qemu",
+            "environment": [],
+            "externalConsole": true,
+            "pipeTransport": {
+                "pipeCwd": "",
+                "pipeProgram": "docker.exe",
+                "pipeArgs": ["exec","-i","debug_qemu","sh","-c"],
+                "debuggerPath": "/usr/bin/gdb"
+            },
+            "MIMode": "gdb",
+            //"miDebuggerPath": "/path/to/gdb",
+            "setupCommands": [
+                {
+                    "description": "gdb の再フォーマットを有効にする",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "prelaunch gdb",
+            "postDebugTask": "postdebug gdb",
+            "sourceFileMap": {
+                "/build/qemu": "${workspaceFolder:qemu}"
+            }
+        }
+    ]
+}
