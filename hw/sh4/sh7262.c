@@ -50,12 +50,14 @@ typedef struct SH7262State {
     MemoryRegion largeram_3c;
     MemoryRegion peripheral;
     MemoryRegion peripheral_fffc;
+    uint16_t pfcr2;
     /* CPU */
     SuperHCPU *cpu;
     /* Bus, controller */
     SSIBus *spi;
     SH7262_RSPI rspi[2];
     struct intc_desc intc;
+    qemu_irq cs_lines[2];
 } SH7262State;
 
 uint32_t sh7262_spdr_read(SH7262State *s, unsigned ch)
@@ -144,6 +146,32 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
     if (SH7262_RSPI_BASE_CH1 <= addr && addr < (SH7262_RSPI_BASE_CH1 + SH7262_RSPI_SIZE)) {
         sh7262_rspi_write(s, 1, addr - SH7262_RSPI_BASE_CH1, mem_value, size);
         return;
+    }
+    if (size == 1)
+    {
+        switch (addr)
+        {
+        case SH7262_PFCR2_UB:
+            s->pfcr2 = (s->pfcr2 & 0x00ff) | (mem_value << 8);
+            qemu_set_irq(s->cs_lines[0], ((s->pfcr2 & 0x0f00) == 0x0300) ? 0 : 1);
+            break;
+
+        default:
+            break;
+        }
+    }
+    else if (size == 2)
+    {
+        switch (addr)
+        {
+        case SH7262_PFCR2:
+            s->pfcr2 = mem_value;
+            qemu_set_irq(s->cs_lines[0], ((s->pfcr2 & 0x0f00) == 0x0300) ? 0 : 1);
+            break;
+
+        default:
+            break;
+        }
     }
 }
 
@@ -325,4 +353,11 @@ SH7262State *sh7262_init(SuperHCPU *cpu, MemoryRegion *sysmem)
 SSIBus* sh7262_get_spi_bus(struct SH7262State *s)
 {
     return s->spi;
+}
+
+int sh7262_register_spi_cs_line(struct SH7262State *s, int n, qemu_irq cs_line)
+{
+    s->cs_lines[n] = cs_line;
+    qemu_set_irq(s->cs_lines[n], 1);
+    return 0;
 }

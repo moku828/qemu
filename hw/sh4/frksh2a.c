@@ -51,6 +51,7 @@ static void frksh2a_init(MachineState *machine)
     dinfo = drive_get_next(IF_MTD);
     qdev_prop_set_drive(dev, "drive", blk_by_legacy_dinfo(dinfo), &error_fatal);
     qdev_init_nofail(dev);
+    sh7262_register_spi_cs_line(s, 0, qdev_get_gpio_in_named(dev, SSI_GPIO_CS, 0));
 
 }
 
