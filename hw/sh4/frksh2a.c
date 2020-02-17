@@ -54,6 +54,7 @@ static void frksh2a_init(MachineState *machine)
     sh7262_register_spi_cs_line(s, 0, qdev_get_gpio_in_named(dev, SSI_GPIO_CS, 0));
 
     dev = ssi_create_slave(sh7262_get_spi_bus(s), "ssi-sd");
+    sh7262_register_spi_cs_line(s, 1, qdev_get_gpio_in_named(dev, SSI_GPIO_CS, 0));
 
 }
 

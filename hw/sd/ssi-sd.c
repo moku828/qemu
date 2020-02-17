@@ -47,6 +47,7 @@ typedef struct {
     int32_t response_pos;
     int32_t stopping;
     SDBus sdbus;
+    bool select;
 } ssi_sd_state;
 
 #define TYPE_SSI_SD "ssi-sd"
@@ -198,6 +199,20 @@ static uint32_t ssi_sd_transfer(SSISlave *dev, uint32_t val)
     return 0xff;
 }
 
+static int ssi_sd_set_cs(SSISlave *dev, bool select)
+{
+    ssi_sd_state *s = FROM_SSI_SLAVE(ssi_sd_state, dev);
+
+    if (select)
+    {
+        s->mode = SSI_SD_CMD;
+    }
+
+    DPRINTF("%sselect\n", select ? "de" : "");
+
+    return 0;
+}
+
 static int ssi_sd_post_load(void *opaque, int version_id)
 {
     ssi_sd_state *s = (ssi_sd_state *)opaque;
@@ -281,6 +296,7 @@ static void ssi_sd_class_init(ObjectClass *klass, void *data)
 
     k->realize = ssi_sd_realize;
     k->transfer = ssi_sd_transfer;
+    k->set_cs = ssi_sd_set_cs;
     k->cs_polarity = SSI_CS_LOW;
     dc->vmsd = &vmstate_ssi_sd;
     dc->reset = ssi_sd_reset;
