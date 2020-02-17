@@ -42,6 +42,8 @@ int sh7262_register_io_device(struct SH7262State *s,
 
 SSIBus* sh7262_get_spi_bus(struct SH7262State *s);
 
+int sh7262_register_spi_cs_line(struct SH7262State *s, int n, qemu_irq cs_line);
+
 /* sh_timer.c */
 #define TMU012_FEAT_TOCR   (1 << 0)
 #define TMU012_FEAT_3CHAN  (1 << 1)
