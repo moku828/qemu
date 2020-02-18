@@ -41,6 +41,7 @@ typedef struct {
   uint8_t pos;
   uint8_t transfer_bit_length; /* 8, 16, 32 */
   uint8_t spcr;
+  uint8_t spdcr;
 } SH7262_RSPI;
 
 typedef struct SH7262State {
@@ -65,7 +66,12 @@ uint32_t sh7262_spdr_read(SH7262State *s, unsigned ch)
 {
     uint32_t val;
     if (s->rspi[ch].pos == 0) {
-        val = ssi_transfer(s->spi, 0xFF);
+        if (SH7262_SPDCR_TXDMY(s->rspi[ch].spdcr) == SH7262_SPDCR_TXDMY_PERMIT) {
+            val = ssi_transfer(s->spi, 0xCD);
+        }
+        else {
+            val = 0xCD;
+        }
     }
     else {
         val = s->rspi[ch].sprx[0];
@@ -96,6 +102,8 @@ static uint32_t sh7262_rspi_read(SH7262State *s, unsigned ch, unsigned ofs, unsi
             return 0x80;
         case SH7262_SPDR_OFS:
             return sh7262_spdr_read(s, ch);
+        case SH7262_SPDCR_OFS:
+            return s->rspi[ch].spdcr;
         }
     }
     return 0;
@@ -116,6 +124,9 @@ static void sh7262_rspi_write(SH7262State *s, unsigned ch, unsigned ofs,
             break;
         case SH7262_SPDR_OFS:
             sh7262_spdr_write(s, ch, mem_value);
+            break;
+        case SH7262_SPDCR_OFS:
+            s->rspi[ch].spdcr = mem_value;
             break;
         case SH7262_SPBFCR_OFS:
             if (mem_value & 0x40) s->rspi[ch].pos = 0;
