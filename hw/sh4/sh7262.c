@@ -41,6 +41,7 @@ typedef struct {
   uint8_t pos;
   uint8_t transfer_bit_length; /* 8, 16, 32 */
   uint8_t spcr;
+  uint8_t spsr;
   uint8_t spdcr;
   uint16_t spcmd0;
   uint8_t spbfcr;
@@ -89,9 +90,18 @@ void sh7262_spdr_write(SH7262State *s, unsigned ch, uint32_t val)
     SH7262_RSPI *rspi = &s->rspi[ch];
     rspi->sptx[0] = val; /* sptx[1] is not in use */
     rspi->shift_register = rspi->sptx[0];
+    rspi->spsr &= 0x40;
     rspi->shift_register = ssi_transfer(s->spi, rspi->shift_register);
+    rspi->spsr |= 0x40;
     rspi->sprx[rspi->pos] = rspi->shift_register;
     rspi->pos++;
+}
+
+static void sh7262_rspi_init(SH7262State *s, unsigned ch)
+{
+    SH7262_RSPI *rspi = &s->rspi[ch];
+    memset(rspi, 0, sizeof(rspi));
+    rspi->spsr = 0x60;
 }
 
 static uint32_t sh7262_rspi_read(SH7262State *s, unsigned ch, unsigned ofs, unsigned size)
@@ -101,7 +111,7 @@ static uint32_t sh7262_rspi_read(SH7262State *s, unsigned ch, unsigned ofs, unsi
         case SH7262_SPCR_OFS:
             return s->rspi[ch].spcr;
         case SH7262_SPSR_OFS:
-            return 0x80;
+            return s->rspi[ch].spsr | 0x80;
         case SH7262_SPDR_OFS:
             return sh7262_spdr_read(s, ch);
         case SH7262_SPDCR_OFS:
@@ -131,6 +141,7 @@ static void sh7262_rspi_write(SH7262State *s, unsigned ch, unsigned ofs,
             }
             break;
         case SH7262_SPSR_OFS:
+            s->rspi[ch].spsr = mem_value;
             break;
         case SH7262_SPDR_OFS:
             sh7262_spdr_write(s, ch, mem_value);
@@ -381,6 +392,8 @@ SH7262State *sh7262_init(SuperHCPU *cpu, MemoryRegion *sysmem)
 
     // SPI bus
     s->spi = ssi_create_bus(NULL, "spi");
+    sh7262_rspi_init(s, 0);
+    sh7262_rspi_init(s, 1);
 
     return s;
 }
