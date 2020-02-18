@@ -168,7 +168,7 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
         {
         case SH7262_PFCR2:
             s->pfcr2 = mem_value;
-            qemu_set_irq(s->cs_lines[0], ((s->pfcr2 & 0x0f00) == 0x0300) ? 0 : 1);
+            qemu_set_irq(s->cs_lines[0], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PFCR2_PF10MD(s->pfcr2) == SH7262_PFCR2_PF10MD_SSL00)) ? 0 : 1);
             break;
 
         default:
