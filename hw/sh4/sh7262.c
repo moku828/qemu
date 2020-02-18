@@ -40,6 +40,7 @@ typedef struct {
   uint32_t shift_register;
   uint8_t pos;
   uint8_t transfer_bit_length; /* 8, 16, 32 */
+  uint8_t spcr;
 } SH7262_RSPI;
 
 typedef struct SH7262State {
@@ -90,7 +91,7 @@ static uint32_t sh7262_rspi_read(SH7262State *s, unsigned ch, unsigned ofs, unsi
     if (size == 1) {
         switch (ofs) {
         case SH7262_SPCR_OFS:
-            break;
+            return s->rspi[ch].spcr;
         case SH7262_SPSR_OFS:
             return 0x80;
         case SH7262_SPDR_OFS:
@@ -106,6 +107,7 @@ static void sh7262_rspi_write(SH7262State *s, unsigned ch, unsigned ofs,
     if (size == 1) {
         switch (ofs) {
         case SH7262_SPCR_OFS:
+            s->rspi[ch].spcr = mem_value;
             break;
         case SH7262_SPSR_OFS:
             break;
@@ -153,7 +155,7 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
         {
         case SH7262_PFCR2_UB:
             s->pfcr2 = (s->pfcr2 & 0x00ff) | (mem_value << 8);
-            qemu_set_irq(s->cs_lines[0], (SH7262_PFCR2_PF10MD(s->pfcr2) == SH7262_PFCR2_PF10MD_SSL00) ? 0 : 1);
+            qemu_set_irq(s->cs_lines[0], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PFCR2_PF10MD(s->pfcr2) == SH7262_PFCR2_PF10MD_SSL00)) ? 0 : 1);
             break;
 
         default:
