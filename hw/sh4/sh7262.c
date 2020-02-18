@@ -42,6 +42,7 @@ typedef struct {
   uint8_t transfer_bit_length; /* 8, 16, 32 */
   uint8_t spcr;
   uint8_t spdcr;
+  uint16_t spcmd0;
   uint8_t spbfcr;
 } SH7262_RSPI;
 
@@ -109,6 +110,12 @@ static uint32_t sh7262_rspi_read(SH7262State *s, unsigned ch, unsigned ofs, unsi
             return s->rspi[ch].spbfcr;
         }
     }
+    else if (size == 2) {
+        switch (ofs) {
+        case SH7262_SPCMD0_OFS:
+            return s->rspi[ch].spcmd0;
+        }
+    }
     return 0;
 }
 
@@ -137,6 +144,14 @@ static void sh7262_rspi_write(SH7262State *s, unsigned ch, unsigned ofs,
             break;
         }
     }
+    else if (size == 2) {
+        switch (ofs) {
+        case SH7262_SPCMD0_OFS:
+            s->rspi[ch].spcmd0 = mem_value;
+            break;
+        }
+    }
+    
     return 0;
 }
 
