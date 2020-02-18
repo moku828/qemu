@@ -108,6 +108,9 @@ static void sh7262_rspi_write(SH7262State *s, unsigned ch, unsigned ofs,
         switch (ofs) {
         case SH7262_SPCR_OFS:
             s->rspi[ch].spcr = mem_value;
+            if (ch == 0) {
+                qemu_set_irq(s->cs_lines[0], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PFCR2_PF10MD(s->pfcr2) == SH7262_PFCR2_PF10MD_SSL00)) ? 0 : 1);
+            }
             break;
         case SH7262_SPSR_OFS:
             break;
