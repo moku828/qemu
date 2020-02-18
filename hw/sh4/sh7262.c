@@ -55,6 +55,7 @@ typedef struct SH7262State {
     MemoryRegion peripheral;
     MemoryRegion peripheral_fffc;
     uint16_t pfcr2;
+    uint16_t pgdr1;
     /* CPU */
     SuperHCPU *cpu;
     /* Bus, controller */
@@ -128,6 +129,7 @@ static void sh7262_rspi_write(SH7262State *s, unsigned ch, unsigned ofs,
             s->rspi[ch].spcr = mem_value;
             if (ch == 0) {
                 qemu_set_irq(s->cs_lines[0], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PFCR2_PF10MD(s->pfcr2) == SH7262_PFCR2_PF10MD_SSL00)) ? 0 : 1);
+                qemu_set_irq(s->cs_lines[1], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PGDR1_PG20DR(s->pgdr1) == 1)) ? 0 : 1);
             }
             break;
         case SH7262_SPSR_OFS:
@@ -191,6 +193,11 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
             qemu_set_irq(s->cs_lines[0], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PFCR2_PF10MD(s->pfcr2) == SH7262_PFCR2_PF10MD_SSL00)) ? 0 : 1);
             break;
 
+        case SH7262_PGDR1_LB:
+            s->pgdr1 = (s->pgdr1 & 0xff00) | (mem_value << 0);
+            qemu_set_irq(s->cs_lines[1], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PGDR1_PG20DR(s->pgdr1) == 1)) ? 0 : 1);
+            break;
+
         default:
             break;
         }
@@ -202,6 +209,11 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
         case SH7262_PFCR2:
             s->pfcr2 = mem_value;
             qemu_set_irq(s->cs_lines[0], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PFCR2_PF10MD(s->pfcr2) == SH7262_PFCR2_PF10MD_SSL00)) ? 0 : 1);
+            break;
+
+        case SH7262_PGDR1:
+            s->pgdr1 = mem_value;
+            qemu_set_irq(s->cs_lines[1], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PGDR1_PG20DR(s->pgdr1) == 1)) ? 0 : 1);
             break;
 
         default:
