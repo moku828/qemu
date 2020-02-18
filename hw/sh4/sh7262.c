@@ -40,6 +40,10 @@ typedef struct {
   uint32_t shift_register;
   uint8_t pos;
   uint8_t transfer_bit_length; /* 8, 16, 32 */
+  uint8_t spcr;
+  uint8_t spdcr;
+  uint16_t spcmd0;
+  uint8_t spbfcr;
 } SH7262_RSPI;
 
 typedef struct SH7262State {
@@ -64,7 +68,12 @@ uint32_t sh7262_spdr_read(SH7262State *s, unsigned ch)
 {
     uint32_t val;
     if (s->rspi[ch].pos == 0) {
-        val = ssi_transfer(s->spi, 0xFF);
+        if (SH7262_SPDCR_TXDMY(s->rspi[ch].spdcr) == SH7262_SPDCR_TXDMY_PERMIT) {
+            val = ssi_transfer(s->spi, 0xCD);
+        }
+        else {
+            val = 0xCD;
+        }
     }
     else {
         val = s->rspi[ch].sprx[0];
@@ -90,11 +99,21 @@ static uint32_t sh7262_rspi_read(SH7262State *s, unsigned ch, unsigned ofs, unsi
     if (size == 1) {
         switch (ofs) {
         case SH7262_SPCR_OFS:
-            break;
+            return s->rspi[ch].spcr;
         case SH7262_SPSR_OFS:
             return 0x80;
         case SH7262_SPDR_OFS:
             return sh7262_spdr_read(s, ch);
+        case SH7262_SPDCR_OFS:
+            return s->rspi[ch].spdcr;
+        case SH7262_SPBFCR_OFS:
+            return s->rspi[ch].spbfcr;
+        }
+    }
+    else if (size == 2) {
+        switch (ofs) {
+        case SH7262_SPCMD0_OFS:
+            return s->rspi[ch].spcmd0;
         }
     }
     return 0;
@@ -106,17 +125,33 @@ static void sh7262_rspi_write(SH7262State *s, unsigned ch, unsigned ofs,
     if (size == 1) {
         switch (ofs) {
         case SH7262_SPCR_OFS:
+            s->rspi[ch].spcr = mem_value;
+            if (ch == 0) {
+                qemu_set_irq(s->cs_lines[0], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PFCR2_PF10MD(s->pfcr2) == SH7262_PFCR2_PF10MD_SSL00)) ? 0 : 1);
+            }
             break;
         case SH7262_SPSR_OFS:
             break;
         case SH7262_SPDR_OFS:
             sh7262_spdr_write(s, ch, mem_value);
             break;
+        case SH7262_SPDCR_OFS:
+            s->rspi[ch].spdcr = mem_value;
+            break;
         case SH7262_SPBFCR_OFS:
-            if (mem_value & 0x40) s->rspi[ch].pos = 0;
+            s->rspi[ch].spbfcr = mem_value;
+            if (SH7262_SPBFCR_RXRST(s->rspi[ch].spbfcr) == SH7262_SPBFCR_RXRST_PERMIT) s->rspi[ch].pos = 0;
             break;
         }
     }
+    else if (size == 2) {
+        switch (ofs) {
+        case SH7262_SPCMD0_OFS:
+            s->rspi[ch].spcmd0 = mem_value;
+            break;
+        }
+    }
+    
     return 0;
 }
 
@@ -153,7 +188,7 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
         {
         case SH7262_PFCR2_UB:
             s->pfcr2 = (s->pfcr2 & 0x00ff) | (mem_value << 8);
-            qemu_set_irq(s->cs_lines[0], ((s->pfcr2 & 0x0f00) == 0x0300) ? 0 : 1);
+            qemu_set_irq(s->cs_lines[0], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PFCR2_PF10MD(s->pfcr2) == SH7262_PFCR2_PF10MD_SSL00)) ? 0 : 1);
             break;
 
         default:
@@ -166,7 +201,7 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
         {
         case SH7262_PFCR2:
             s->pfcr2 = mem_value;
-            qemu_set_irq(s->cs_lines[0], ((s->pfcr2 & 0x0f00) == 0x0300) ? 0 : 1);
+            qemu_set_irq(s->cs_lines[0], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PFCR2_PF10MD(s->pfcr2) == SH7262_PFCR2_PF10MD_SSL00)) ? 0 : 1);
             break;
 
         default:
