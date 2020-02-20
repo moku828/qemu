@@ -1,6 +1,23 @@
 #ifndef _SH7262_REGS_H_
 #define _SH7262_REGS_H_
 
+#define GET_UW(reg) ((reg >> 16) & 0x0000FFFF)
+#define GET_LW(reg) ((reg >>  0) & 0x0000FFFF)
+#define GET_1B(reg) ((reg >> 24) & 0x00FF)
+#define GET_2B(reg) ((reg >> 16) & 0x00FF)
+#define GET_3B(reg) ((reg >>  8) & 0x00FF)
+#define GET_4B(reg) ((reg >>  0) & 0x00FF)
+#define GET_UB(reg) ((reg >>  8) & 0x00FF)
+#define GET_LB(reg) ((reg >>  0) & 0x00FF)
+#define OFS_UW(reg) (reg + 0x00)
+#define OFS_LW(reg) (reg + 0x02)
+#define OFS_1B(reg) (reg + 0x00)
+#define OFS_2B(reg) (reg + 0x01)
+#define OFS_3B(reg) (reg + 0x02)
+#define OFS_4B(reg) (reg + 0x03)
+#define OFS_UB(reg) (reg + 0x00)
+#define OFS_LB(reg) (reg + 0x01)
+
 #define SH7262_RSPI_SIZE 0x00000800
 #define SH7262_RSPI_BASE_CH0 0xFFFF8000
 #define SH7262_RSPI_BASE_CH1 0xFFFF8800
@@ -51,5 +68,31 @@
 #define SH7262_PFCR2_PF10MD_SSL00 3
 #define SH7262_PFCR2_PF10MD_TIOC3B 4
 #define SH7262_PFCR2_PF10MD_nFCE 5
+
+#define SH7262_DMAC_BASE_CH0 0xFFFE1000
+#define SH7262_DMAC_DMAOR 0xFFFE1200
+#define SH7262_DMAC_DMARS0 0xFFFE1300
+#define SH7262_DMAC_DMARS1 0xFFFE1304
+#define SH7262_DMAC_DMARS2 0xFFFE1308
+#define SH7262_DMAC_DMARS3 0xFFFE130C
+#define SH7262_DMAC_DMARS4 0xFFFE1310
+#define SH7262_DMAC_DMARS5 0xFFFE1314
+#define SH7262_DMAC_DMARS6 0xFFFE1318
+#define SH7262_DMAC_DMARS7 0xFFFE131C
+#define SH7262_SAR_OFS 0x00
+#define SH7262_DAR_OFS 0x04
+#define SH7262_DMATCR_OFS 0x08
+#define SH7262_CHCR_OFS 0x0C
+#define SH7262_RSAR_OFS 0x100
+#define SH7262_RDAR_OFS 0x104
+#define SH7262_RDMATCR_OFS 0x108
+#define SH7262_CHCR_TS(reg) ((reg >> 3) & 0x03)
+#define SH7262_CHCR_TS_BYTE 0
+#define SH7262_CHCR_TS_WORD 1
+#define SH7262_CHCR_TS_LONGWORD 2
+#define SH7262_CHCR_TS_16BYTE 3
+#define SH7262_CHCR_DE(reg) ((reg >> 0) & 0x01)
+#define SH7262_CHCR_DE_PROHIBIT 0
+#define SH7262_CHCR_DE_PERMIT 1
 
 #endif // _SH7262_REGS_H_
