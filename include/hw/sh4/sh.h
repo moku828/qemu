@@ -40,7 +40,7 @@ typedef struct {
 int sh7262_register_io_device(struct SH7262State *s,
 			      sh7262_io_device * device);
 
-SSIBus* sh7262_get_spi_bus(struct SH7262State *s);
+SSIBus* sh7262_get_spi_bus(struct SH7262State *s, unsigned ch);
 
 int sh7262_register_spi_cs_line(struct SH7262State *s, int n, qemu_irq cs_line);
 

@@ -45,6 +45,7 @@ typedef struct {
   uint8_t spdcr;
   uint16_t spcmd0;
   uint8_t spbfcr;
+  SSIBus *spi;
 } SH7262_RSPI;
 
 typedef struct SH7262State {
@@ -59,7 +60,6 @@ typedef struct SH7262State {
     /* CPU */
     SuperHCPU *cpu;
     /* Bus, controller */
-    SSIBus *spi;
     SH7262_RSPI rspi[2];
     struct intc_desc intc;
     qemu_irq cs_lines[2];
@@ -70,7 +70,7 @@ uint32_t sh7262_spdr_read(SH7262State *s, unsigned ch)
     uint32_t val;
     if (s->rspi[ch].pos == 0) {
         if (SH7262_SPDCR_TXDMY(s->rspi[ch].spdcr) == SH7262_SPDCR_TXDMY_PERMIT) {
-            val = ssi_transfer(s->spi, 0xCD);
+            val = ssi_transfer(s->rspi[ch].spi, 0xCD);
         }
         else {
             val = 0xCD;
@@ -91,7 +91,7 @@ void sh7262_spdr_write(SH7262State *s, unsigned ch, uint32_t val)
     rspi->sptx[0] = val; /* sptx[1] is not in use */
     rspi->shift_register = rspi->sptx[0];
     rspi->spsr &= 0x40;
-    rspi->shift_register = ssi_transfer(s->spi, rspi->shift_register);
+    rspi->shift_register = ssi_transfer(s->rspi[ch].spi, rspi->shift_register);
     rspi->spsr |= 0x40;
     rspi->sprx[rspi->pos] = rspi->shift_register;
     rspi->pos++;
@@ -100,7 +100,9 @@ void sh7262_spdr_write(SH7262State *s, unsigned ch, uint32_t val)
 static void sh7262_rspi_init(SH7262State *s, unsigned ch)
 {
     SH7262_RSPI *rspi = &s->rspi[ch];
-    memset(rspi, 0, sizeof(rspi));
+    char name[16];
+    sprintf(name, "spi%d", ch);
+    rspi->spi = ssi_create_bus(NULL, name);
     rspi->spsr = 0x60;
 }
 
@@ -391,16 +393,15 @@ SH7262State *sh7262_init(SuperHCPU *cpu, MemoryRegion *sysmem)
                    s->intc.irqs[IRQ7]);
 
     // SPI bus
-    s->spi = ssi_create_bus(NULL, "spi");
     sh7262_rspi_init(s, 0);
     sh7262_rspi_init(s, 1);
 
     return s;
 }
 
-SSIBus* sh7262_get_spi_bus(struct SH7262State *s)
+SSIBus* sh7262_get_spi_bus(struct SH7262State *s, unsigned ch)
 {
-    return s->spi;
+    return s->rspi[ch].spi;
 }
 
 int sh7262_register_spi_cs_line(struct SH7262State *s, int n, qemu_irq cs_line)

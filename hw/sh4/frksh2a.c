@@ -47,7 +47,7 @@ static void frksh2a_init(MachineState *machine)
 
     s = sh7262_init(cpu, sysmem);
 
-    dev = ssi_create_slave_no_init(sh7262_get_spi_bus(s), "m25p05");
+    dev = ssi_create_slave_no_init(sh7262_get_spi_bus(s, 0), "m25p05");
     dinfo = drive_get_next(IF_MTD);
     qdev_prop_set_drive(dev, "drive", blk_by_legacy_dinfo(dinfo), &error_fatal);
     qdev_init_nofail(dev);
