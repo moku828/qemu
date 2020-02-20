@@ -779,9 +779,7 @@ static void reset_memory(Flash *s)
         s->volatile_cfg |= deposit32(s->volatile_cfg,
                             VCFG_DUMMY_CLK_POS,
                             CFG_DUMMY_CLK_LEN,
-                            extract32(s->nonvolatile_cfg,
-                                        NVCFG_DUMMY_CLK_POS,
-                                        CFG_DUMMY_CLK_LEN)
+                            1
                             );
 
         s->enh_volatile_cfg = 0;
