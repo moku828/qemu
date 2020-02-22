@@ -10,7 +10,8 @@
             "request": "launch",
             "program": "/build/qemu/build/sh4eb-softmmu/qemu-system-sh4eb",
             "args": [
-                "-drive", "file=SPIROM.IMG,if=mtd,format=raw"
+                "-drive", "file=SPIROM.IMG,if=mtd,format=raw",
+                "-trace", "events=/build/qemu/trace.events",
             ],
             "stopAtEntry": true,
             "cwd": "/build/qemu",
