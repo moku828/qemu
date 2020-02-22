@@ -49,9 +49,19 @@ typedef struct {
 } SH7262_RSPI;
 
 typedef struct {
+  uint32_t sar;
   uint32_t dar;
   uint32_t dmatcr;
   uint32_t chcr;
+  uint32_t rsar;
+  uint32_t rdar;
+  uint32_t rdmatcr;
+} SH7262_DMAC_PER_CHANNEL;
+
+typedef struct {
+  SH7262_DMAC_PER_CHANNEL pc[16];
+  uint16_t dmaor;
+  uint16_t dmars[8];
 } SH7262_DMAC;
 
 typedef struct SH7262State {
@@ -70,53 +80,117 @@ typedef struct SH7262State {
     SH7262_RSPI rspi[2];
     struct intc_desc intc;
     qemu_irq cs_lines[2];
-    SH7262_DMAC dmac[16];
+    SH7262_DMAC dmac;
 } SH7262State;
 
-static void sh7262_dma_rspi_to_ram(SH7262State *s, unsigned dma_ch, unsigned rspi_ch)
+static void sh7262_dma_transfer(SH7262State *s, unsigned ch)
 {
-    int ts = 0;
-    switch (SH7262_CHCR_TS(s->dmac[dma_ch].chcr)) {
+    int ts = 0, dm = 0, sm = 0;
+    switch (SH7262_CHCR_TS(s->dmac.pc[ch].chcr)) {
     case SH7262_CHCR_TS_BYTE: ts = 1; break;
     case SH7262_CHCR_TS_WORD: ts = 2; break;
     case SH7262_CHCR_TS_LONGWORD: ts = 4; break;
     case SH7262_CHCR_TS_16BYTE: ts = 16; break;
     }
-    for (int i = 0; i < ts * s->dmac[dma_ch].dmatcr; i++)
-    {
-        stb_phys(&s->sysmem_as, s->dmac[dma_ch].dar + i, ssi_transfer(s->rspi[rspi_ch].spi, 0xCD));
+    switch (SH7262_CHCR_DM(s->dmac.pc[ch].chcr)) {
+    case SH7262_CHCR_DM_INC: dm = 1; break;
+    case SH7262_CHCR_DM_DEC: dm = -1; break;
     }
-    s->dmac[dma_ch].dmatcr = 0;
-    s->dmac[dma_ch].chcr |= 0x0002;
+    switch (SH7262_CHCR_SM(s->dmac.pc[ch].chcr)) {
+    case SH7262_CHCR_SM_INC: sm = 1; break;
+    case SH7262_CHCR_SM_DEC: sm = -1; break;
+    }
+    for (int i = 0, si = 0, di = 0; i < ts * s->dmac.pc[ch].dmatcr; i++) {
+        stb_phys(&s->sysmem_as, s->dmac.pc[ch].dar + di, ldub_phys(&s->sysmem_as, s->dmac.pc[ch].sar + si));
+        di += dm;
+        si += sm;
+    }
+    s->dmac.pc[ch].dmatcr = 0;
+    s->dmac.pc[ch].chcr |= 0x0002;
 }
 
-static uint32_t sh7262_dmac_read(SH7262State *s, unsigned ch, unsigned ofs, unsigned size)
+static uint32_t sh7262_dmac_per_channel_read(SH7262State *s, unsigned ch, unsigned ofs, unsigned size)
 {
     if (size == 1) {
         switch (ofs) {
-        case OFS_4B(SH7262_CHCR_OFS): return GET_4B(s->dmac[ch].chcr);
+        case OFS_4B(SH7262_CHCR_OFS): return GET_4B(s->dmac.pc[ch].chcr);
         }
     }
     return 0;
 }
 
-static void sh7262_dmac_write(SH7262State *s, unsigned ch, unsigned ofs,
+static void sh7262_dmac_per_channel_write(SH7262State *s, unsigned ch, unsigned ofs,
                                   uint32_t mem_value, unsigned size)
 {
     if (size == 4) {
         switch (ofs) {
-        case SH7262_DAR_OFS: s->dmac[ch].dar = mem_value; break;
-        case SH7262_DMATCR_OFS: s->dmac[ch].dmatcr = mem_value; break;
+        case SH7262_SAR_OFS: s->dmac.pc[ch].sar = mem_value; break;
+        case SH7262_DAR_OFS: s->dmac.pc[ch].dar = mem_value; break;
+        case SH7262_DMATCR_OFS: s->dmac.pc[ch].dmatcr = mem_value; break;
         case SH7262_CHCR_OFS:
-            s->dmac[ch].chcr = mem_value;
-            if ((SH7262_CHCR_DE(s->dmac[ch].chcr) == SH7262_CHCR_DE_PERMIT) && (SH7262_SPDCR_TXDMY(s->rspi[0].spdcr) == SH7262_SPDCR_TXDMY_PERMIT)) {
-                sh7262_dma_rspi_to_ram(s, ch, 0);
+            s->dmac.pc[ch].chcr = mem_value;
+            if (SH7262_CHCR_DE(s->dmac.pc[ch].chcr) == SH7262_CHCR_DE_PERMIT) {
+                int do_tranfer = 0;
+                switch (SH7262_DMARS_MID(SH7262_DMARS_CH(s->dmac.dmars[ch >> 1], ch))) {
+                case SH7262_DMARS_MID_RSPI_CH0:
+                    if (SH7262_SPDCR_TXDMY(s->rspi[0].spdcr) == SH7262_SPDCR_TXDMY_PERMIT) do_tranfer = 1;
+                    break;
+                case SH7262_DMARS_MID_RSPI_CH1:
+                    if (SH7262_SPDCR_TXDMY(s->rspi[1].spdcr) == SH7262_SPDCR_TXDMY_PERMIT) do_tranfer = 1;
+                    break;
+                }
+                if (do_tranfer) sh7262_dma_transfer(s, ch);
             }
             break;
         }
     }
     
     return 0;
+}
+
+static uint32_t sh7262_dmac_dmaor_read(SH7262State *s, hwaddr addr, unsigned size)
+{
+    return GET_REG_WORD(s->dmac.dmaor, addr, size);
+}
+
+static void sh7262_dmac_dmaor_write(SH7262State *s, hwaddr addr,
+                                  uint32_t mem_value, unsigned size)
+{
+    SET_REG_WORD(s->dmac.dmaor, addr, mem_value, size);
+}
+
+static uint32_t sh7262_dmac_dmars_read(SH7262State *s, hwaddr addr, unsigned size)
+{
+    return GET_REG_WORD(s->dmac.dmars[(addr >> 2) & 0x07], addr, size);
+}
+
+static void sh7262_dmac_dmars_write(SH7262State *s, hwaddr addr,
+                                  uint32_t mem_value, unsigned size)
+{
+    SET_REG_WORD(s->dmac.dmars[(addr >> 2) & 0x07], addr, mem_value, size);
+}
+
+static uint32_t sh7262_dmac_read(SH7262State *s, hwaddr addr, unsigned size)
+{
+    if (addr < SH7262_DMAC_DMAOR) {
+        return sh7262_dmac_per_channel_read(s, (addr >> 4) & 0x0F, addr & 0x0F0F, size);
+    } else if (addr >= SH7262_DMAC_DMARS0) {
+        return sh7262_dmac_dmars_read(s, addr, size);
+    } else {
+        return sh7262_dmac_dmaor_read(s, addr, size);
+    }
+}
+
+static void sh7262_dmac_write(SH7262State *s, hwaddr addr,
+                                  uint32_t mem_value, unsigned size)
+{
+    if (addr < SH7262_DMAC_DMAOR) {
+        return sh7262_dmac_per_channel_write(s, (addr >> 4) & 0x0F, addr & 0x0F0F, mem_value, size);
+    } else if (addr >= SH7262_DMAC_DMARS0) {
+        return sh7262_dmac_dmars_write(s, addr, mem_value, size);
+    } else {
+        return sh7262_dmac_dmaor_write(s, addr, mem_value, size);
+    }
 }
 
 uint32_t sh7262_spdr_read(SH7262State *s, unsigned ch)
@@ -204,8 +278,16 @@ static void sh7262_rspi_write(SH7262State *s, unsigned ch, unsigned ofs,
             break;
         case SH7262_SPDCR_OFS:
             s->rspi[ch].spdcr = mem_value;
-            if ((SH7262_CHCR_DE(s->dmac[0].chcr) == SH7262_CHCR_DE_PERMIT) && (SH7262_SPDCR_TXDMY(s->rspi[ch].spdcr) == SH7262_SPDCR_TXDMY_PERMIT)) {
-                sh7262_dma_rspi_to_ram(s, 0, ch);
+            if (SH7262_SPDCR_TXDMY(s->rspi[ch].spdcr) == SH7262_SPDCR_TXDMY_PERMIT) {
+                int do_tranfer = 0;
+                int mid = (ch == 0) ? SH7262_DMARS_MID_RSPI_CH0 : SH7262_DMARS_MID_RSPI_CH1;
+                for (int i = 0; i < 16; i++) {
+                    if ((SH7262_DMARS_MID(SH7262_DMARS_CH(s->dmac.dmars[i >> 1], i)) == mid) && (SH7262_CHCR_DE(s->dmac.pc[i].chcr) == SH7262_CHCR_DE_PERMIT)) {
+                        do_tranfer = 1;
+                        break;
+                    }
+                }
+                if (do_tranfer) sh7262_dma_transfer(s, ch);
             }
             break;
         case SH7262_SPBFCR_OFS:
@@ -235,8 +317,8 @@ static uint32_t sh7262_peripheral_read(void *opaque, hwaddr addr, unsigned size)
     if (SH7262_RSPI_BASE_CH1 <= addr && addr < (SH7262_RSPI_BASE_CH1 + SH7262_RSPI_SIZE)) {
         return sh7262_rspi_read(s, 1, addr - SH7262_RSPI_BASE_CH1, size);
     }
-    if (SH7262_DMAC_BASE_CH0 <= addr && addr < SH7262_DMAC_DMAOR) {
-        return sh7262_dmac_read(s, (addr >> 4) & 0x0F, addr & 0x0F0F, size);
+    if (SH7262_DMAC_BASE <= addr && addr < (SH7262_DMAC_BASE + SH7262_DMAC_SIZE)) {
+        return sh7262_dmac_read(s, addr, size);
     }
 
     return 0;
@@ -255,8 +337,8 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
         sh7262_rspi_write(s, 1, addr - SH7262_RSPI_BASE_CH1, mem_value, size);
         return;
     }
-    if (SH7262_DMAC_BASE_CH0 <= addr && addr < SH7262_DMAC_DMAOR) {
-        return sh7262_dmac_write(s, (addr >> 4) & 0x0F, addr & 0x0F0F, mem_value, size);
+    if (SH7262_DMAC_BASE <= addr && addr < (SH7262_DMAC_BASE + SH7262_DMAC_SIZE)) {
+        return sh7262_dmac_write(s, addr, mem_value, size);
     }
     if (size == 1)
     {
