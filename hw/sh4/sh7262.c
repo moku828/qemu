@@ -41,10 +41,22 @@ typedef struct {
   uint8_t pos;
   uint8_t transfer_bit_length; /* 8, 16, 32 */
   uint8_t spcr;
+  uint8_t sslp;
+  uint8_t sppcr;
   uint8_t spsr;
+  uint8_t spscr;
+  uint8_t spssr;
+  uint8_t spbr;
   uint8_t spdcr;
+  uint8_t spckd;
+  uint8_t sslnd;
+  uint8_t spnd;
   uint16_t spcmd0;
+  uint16_t spcmd1;
+  uint16_t spcmd2;
+  uint16_t spcmd3;
   uint8_t spbfcr;
+  uint16_t spbfdr;
   SSIBus *spi;
 } SH7262_RSPI;
 
@@ -279,11 +291,20 @@ static void sh7262_rspi_write(SH7262State *s, unsigned ch, unsigned ofs,
                 qemu_set_irq(s->cs_lines[0], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PFCR2_PF10MD(s->pfcr2) == SH7262_PFCR2_PF10MD_SSL00)) ? 0 : 1);
             }
             break;
+        case SH7262_SSLP_OFS:
+            s->rspi[ch].sslp = mem_value;
+            break;
+        case SH7262_SPPCR_OFS:
+            s->rspi[ch].sppcr = mem_value;
+            break;
         case SH7262_SPSR_OFS:
             s->rspi[ch].spsr = mem_value;
             break;
         case SH7262_SPDR_OFS:
             sh7262_spdr_write(s, ch, mem_value);
+            break;
+        case SH7262_SPBR_OFS:
+            s->rspi[ch].spbr = mem_value;
             break;
         case SH7262_SPDCR_OFS:
             s->rspi[ch].spdcr = mem_value;
@@ -298,6 +319,18 @@ static void sh7262_rspi_write(SH7262State *s, unsigned ch, unsigned ofs,
                 }
                 if (do_tranfer) sh7262_dma_transfer(s, ch);
             }
+            break;
+        case SH7262_SPSCR_OFS:
+            s->rspi[ch].spscr = mem_value;
+            break;
+        case SH7262_SPCKD_OFS:
+            s->rspi[ch].spckd = mem_value;
+            break;
+        case SH7262_SSLND_OFS:
+            s->rspi[ch].sslnd = mem_value;
+            break;
+        case SH7262_SPND_OFS:
+            s->rspi[ch].spnd = mem_value;
             break;
         case SH7262_SPBFCR_OFS:
             s->rspi[ch].spbfcr = mem_value;
