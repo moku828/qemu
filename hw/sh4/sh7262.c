@@ -73,6 +73,7 @@ typedef struct {
 
 typedef struct {
   ptimer_state* pts;
+  qemu_irq cmi;
   uint16_t cmcsr;
   uint16_t cmcnt;
   uint16_t cmcor;
@@ -159,18 +160,27 @@ static uint32_t sh7262_cmt_cmstr_read(SH7262State *s, hwaddr addr, unsigned size
 static void sh7262_cmt_0_tick(void *opaque)
 {
     SH7262State* s = (SH7262State*)opaque;
+    s->cmt.pc[0].cmcsr |= 0x0040;
+    if (SH7262_CMCSR_CMIE(s->cmt.pc[0].cmcsr) == SH7262_CMCSR_CMIE_PERMIT) {
+        qemu_set_irq(s->cmt.pc[0].cmi, 1);
+    }
 }
 
 static void sh7262_cmt_1_tick(void *opaque)
 {
     SH7262State* s = (SH7262State*)opaque;
+    s->cmt.pc[1].cmcsr |= 0x0040;
+    if (SH7262_CMCSR_CMIE(s->cmt.pc[1].cmcsr) == SH7262_CMCSR_CMIE_PERMIT) {
+        qemu_set_irq(s->cmt.pc[1].cmi, 1);
+    }
 }
 
-static void sh7262_cmt_init(SH7262State *s, unsigned ch)
+static void sh7262_cmt_init(SH7262State *s, unsigned ch, qemu_irq cmi)
 {
     QEMUBH* bh;
     bh = qemu_bh_new(ch == 0 ? sh7262_cmt_0_tick : sh7262_cmt_1_tick, s);
     s->cmt.pc[ch].pts = ptimer_init(bh, PTIMER_POLICY_DEFAULT);
+    s->cmt.pc[ch].cmi = cmi;
 }
 
 static void sh7262_cmt_cmstr_write(SH7262State *s, hwaddr addr,
@@ -633,6 +643,7 @@ enum {
 	/* interrupt sources */
 	IRQ0, IRQ1, IRQ2, IRQ3,
 	IRQ4, IRQ5, IRQ6, IRQ7,
+    CMI0, CMI1,
 
 	/* interrupt groups */
 
@@ -644,6 +655,7 @@ static struct intc_vect vectors[] = {
 	INTC_VECT(IRQ2, 66), INTC_VECT(IRQ3, 67),
 	INTC_VECT(IRQ4, 68), INTC_VECT(IRQ5, 69),
 	INTC_VECT(IRQ6, 70), INTC_VECT(IRQ7, 71),
+	INTC_VECT(CMI0, 175), INTC_VECT(CMI1, 176),
 };
 
 static struct intc_group groups[] = {
@@ -799,8 +811,8 @@ SH7262State *sh7262_init(SuperHCPU *cpu, MemoryRegion *sysmem)
     sh7262_rspi_init(s, 1);
 
     // Compare match timer
-    sh7262_cmt_init(s, 0);
-    sh7262_cmt_init(s, 1);
+    sh7262_cmt_init(s, 0, s->intc.irqs[CMI0]);
+    sh7262_cmt_init(s, 1, s->intc.irqs[CMI1]);
 
     return s;
 }
