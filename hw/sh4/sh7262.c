@@ -85,6 +85,12 @@ typedef struct SH7262State {
     MemoryRegion peripheral;
     MemoryRegion peripheral_fffc;
     AddressSpace sysmem_as;
+    uint16_t frqcr;
+    uint16_t stbcr5;
+    uint16_t pccr2;
+    uint16_t pcior0;
+    uint16_t pcdr0;
+    uint16_t pfcr3;
     uint16_t pfcr2;
     /* CPU */
     SuperHCPU *cpu;
@@ -366,11 +372,31 @@ static uint32_t sh7262_peripheral_read(void *opaque, hwaddr addr, unsigned size)
         return sh7262_dmac_read(s, addr, size);
     } else if (size == 1) {
         switch (addr) {
+        case SH7262_FRQCR_LB:
+            return GET_LB(s->frqcr);
+        case SH7262_PCCR2_UB:
+            return GET_UB(s->pccr2);
+        case SH7262_PCCR2_LB:
+            return GET_LB(s->pccr2);
+        case SH7262_PCIOR0_UB:
+            return GET_UB(s->pcior0);
+        case SH7262_PCDR0_UB:
+            return GET_UB(s->pcdr0);
+        case SH7262_PFCR3_LB:
+            return GET_LB(s->pfcr3);
+        case SH7262_PFCR2_UB:
+            return GET_UB(s->pfcr2);
+        case SH7262_PFCR2_LB:
+            return GET_LB(s->pfcr2);
+        case SH7262_STBCR5:
+            return s->stbcr5;
         default:
             abort();
         }
     } else if (size == 2) {
         switch (addr) {
+        case SH7262_ICR0:
+            return 0x0000;
         default:
             abort();
         }
@@ -394,15 +420,45 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
         sh7262_dmac_write(s, addr, mem_value, size);
     } else if (size == 1) {
         switch (addr) {
+        case SH7262_FRQCR_LB:
+            s->frqcr = (s->frqcr & 0xff00) | (mem_value << 0);
+            break;
+        case SH7262_PCCR2_UB:
+            s->pccr2 = (s->pccr2 & 0x00ff) | (mem_value << 8);
+            break;
+        case SH7262_PCCR2_LB:
+            s->pccr2 = (s->pccr2 & 0xff00) | (mem_value << 0);
+            break;
+        case SH7262_PCIOR0_UB:
+            s->pcior0 = (s->pcior0 & 0x00ff) | (mem_value << 8);
+            break;
+        case SH7262_PCDR0_UB:
+            s->pcdr0 = (s->pcdr0 & 0x00ff) | (mem_value << 8);
+            break;
+        case SH7262_PFCR3_LB:
+            s->pfcr3 = (s->pfcr3 & 0xff00) | (mem_value << 0);
+            break;
         case SH7262_PFCR2_UB:
             s->pfcr2 = (s->pfcr2 & 0x00ff) | (mem_value << 8);
             qemu_set_irq(s->cs_lines[0], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PFCR2_PF10MD(s->pfcr2) == SH7262_PFCR2_PF10MD_SSL00)) ? 0 : 1);
+            break;
+        case SH7262_PFCR2_LB:
+            s->pfcr2 = (s->pfcr2 & 0xff00) | (mem_value << 0);
+            break;
+        case SH7262_STBCR5:
+            s->stbcr5 = mem_value;
             break;
         default:
             abort();
         }
     } else if (size == 2) {
         switch (addr) {
+        case SH7262_FRQCR:
+            s->frqcr = mem_value;
+            break;
+        case SH7262_PFCR3:
+            s->pfcr3 = mem_value;
+            break;
         case SH7262_PFCR2:
             s->pfcr2 = mem_value;
             qemu_set_irq(s->cs_lines[0], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PFCR2_PF10MD(s->pfcr2) == SH7262_PFCR2_PF10MD_SSL00)) ? 0 : 1);
