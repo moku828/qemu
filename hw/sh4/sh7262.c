@@ -310,8 +310,6 @@ static void sh7262_dmac_per_channel_write(SH7262State *s, unsigned ch, unsigned 
     } else {
         abort();
     }
-    
-    return 0;
 }
 
 static uint32_t sh7262_dmac_dmaor_read(SH7262State *s, hwaddr addr, unsigned size)
@@ -351,11 +349,11 @@ static void sh7262_dmac_write(SH7262State *s, hwaddr addr,
                                   uint32_t mem_value, unsigned size)
 {
     if (addr < SH7262_DMAC_DMAOR) {
-        return sh7262_dmac_per_channel_write(s, (addr >> 4) & 0x0F, addr & 0x0F0F, mem_value, size);
+        sh7262_dmac_per_channel_write(s, (addr >> 4) & 0x0F, addr & 0x0F0F, mem_value, size);
     } else if (addr >= SH7262_DMAC_DMARS0) {
-        return sh7262_dmac_dmars_write(s, addr, mem_value, size);
+        sh7262_dmac_dmars_write(s, addr, mem_value, size);
     } else {
-        return sh7262_dmac_dmaor_write(s, addr, mem_value, size);
+        sh7262_dmac_dmaor_write(s, addr, mem_value, size);
     }
 }
 
@@ -496,8 +494,6 @@ static void sh7262_rspi_write(SH7262State *s, unsigned ch, unsigned ofs,
     } else {
         abort();
     }
-    
-    return 0;
 }
 
 static uint32_t sh7262_peripheral_read(void *opaque, hwaddr addr, unsigned size)
