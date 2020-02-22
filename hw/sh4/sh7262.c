@@ -33,6 +33,7 @@
 #include "sh7262_regs.h"
 #include "hw/sh4/sh_intc.h"
 #include "chardev/char-fe.h"
+#include "hw/ptimer.h"
 
 typedef struct {
   uint32_t sprx[8];
@@ -71,6 +72,18 @@ typedef struct {
 } SH7262_DMAC_PER_CHANNEL;
 
 typedef struct {
+  ptimer_state* pts;
+  uint16_t cmcsr;
+  uint16_t cmcnt;
+  uint16_t cmcor;
+} SH7262_CMT_PER_CHANNEL;
+
+typedef struct {
+  uint16_t cmstr;
+  SH7262_CMT_PER_CHANNEL pc[2];
+} SH7262_CMT;
+
+typedef struct {
   SH7262_DMAC_PER_CHANNEL pc[16];
   uint16_t dmaor;
   uint16_t dmars[8];
@@ -87,6 +100,8 @@ typedef struct SH7262State {
     AddressSpace sysmem_as;
     uint16_t frqcr;
     uint16_t stbcr5;
+    uint16_t stbcr7;
+    uint16_t ipr10;
     uint16_t pccr2;
     uint16_t pcior0;
     uint16_t pcdr0;
@@ -99,7 +114,132 @@ typedef struct SH7262State {
     struct intc_desc intc;
     qemu_irq cs_lines[2];
     SH7262_DMAC dmac;
+    SH7262_CMT cmt;
 } SH7262State;
+
+static uint32_t sh7262_cmt_per_channel_read(SH7262State *s, unsigned ch, unsigned ofs, unsigned size)
+{
+    if (size == 1) {
+        switch (ofs) {
+        case OFS_LB(SH7262_CMCSR_OFS): return GET_LB(s->cmt.pc[ch].cmcsr);
+        default:
+            abort();
+        }
+    } else {
+        abort();
+    }
+    return 0;
+}
+
+static void sh7262_cmt_per_channel_write(SH7262State *s, unsigned ch, unsigned ofs,
+                                  uint32_t mem_value, unsigned size)
+{
+    if (size == 1) {
+        switch (ofs) {
+        case OFS_LB(SH7262_CMCSR_OFS): s->cmt.pc[ch].cmcsr = RPL_LB(s->cmt.pc[ch].cmcsr, mem_value); break;
+        default:
+            abort();
+        }
+    } else if (size == 2) {
+        switch (ofs) {
+        case SH7262_CMCOR_OFS: s->cmt.pc[ch].cmcor = mem_value; break;
+        default:
+            abort();
+        }
+    } else {
+        abort();
+    }
+}
+
+static uint32_t sh7262_cmt_cmstr_read(SH7262State *s, hwaddr addr, unsigned size)
+{
+    return GET_REG_WORD(s->cmt.cmstr, addr, size);
+}
+
+static void sh7262_cmt_0_tick(void *opaque)
+{
+    SH7262State* s = (SH7262State*)opaque;
+}
+
+static void sh7262_cmt_1_tick(void *opaque)
+{
+    SH7262State* s = (SH7262State*)opaque;
+}
+
+static void sh7262_cmt_init(SH7262State *s, unsigned ch)
+{
+    QEMUBH* bh;
+    bh = qemu_bh_new(ch == 0 ? sh7262_cmt_0_tick : sh7262_cmt_1_tick, s);
+    s->cmt.pc[ch].pts = ptimer_init(bh, PTIMER_POLICY_DEFAULT);
+}
+
+static void sh7262_cmt_cmstr_write(SH7262State *s, hwaddr addr,
+                                  uint32_t mem_value, unsigned size)
+{
+    bool prvstp[2];
+    bool newstp[2];
+    prvstp[0] = SH7262_CMSTR_STR0(s->cmt.cmstr) == SH7262_CMSTR_STR0_CNTSTP ? true : false;
+    prvstp[1] = SH7262_CMSTR_STR1(s->cmt.cmstr) == SH7262_CMSTR_STR1_CNTSTP ? true : false;
+    SET_REG_WORD(s->cmt.cmstr, addr, mem_value, size);
+    newstp[0] = SH7262_CMSTR_STR0(s->cmt.cmstr) == SH7262_CMSTR_STR0_CNTSTP ? true : false;
+    newstp[1] = SH7262_CMSTR_STR1(s->cmt.cmstr) == SH7262_CMSTR_STR1_CNTSTP ? true : false;
+    for (int i = 0; i < 2; i++) {
+        if (prvstp[i] != newstp[i]) {
+            if (newstp[i]) {
+                ptimer_stop(s->cmt.pc[i].pts);
+            } else {
+                int cks = 0;
+                switch (SH7262_CMCSR_CKS(s->cmt.pc[i].cmcsr)) {
+                case SH7262_CMCSR_CKS_PCLKDIV8: cks = 8; break;
+                case SH7262_CMCSR_CKS_PCLKDIV32: cks = 32; break;
+                case SH7262_CMCSR_CKS_PCLKDIV128: cks = 128; break;
+                case SH7262_CMCSR_CKS_PCLKDIV512: cks = 512; break;
+                }
+                int stc = 0;
+                switch (SH7262_FRQCR_STC(s->frqcr)) {
+                case SH7262_FRQCR_STC_MUL8: stc = 8; break;
+                case SH7262_FRQCR_STC_MUL12: stc = 12; break;
+                }
+                int pfc = 0;
+                switch (SH7262_FRQCR_PFC(s->frqcr)) {
+                case SH7262_FRQCR_PFC_DIV4: pfc = 4; break;
+                case SH7262_FRQCR_PFC_DIV6: pfc = 6; break;
+                case SH7262_FRQCR_PFC_DIV8: pfc = 8; break;
+                case SH7262_FRQCR_PFC_DIV12: pfc = 12; break;
+                }
+                int pclk = ((12 * stc) / pfc) * 1000000;
+                ptimer_set_limit(s->cmt.pc[i].pts, s->cmt.pc[i].cmcor, 0);
+                s->cmt.pc[i].cmcnt = 0;
+                ptimer_set_count(s->cmt.pc[i].pts, s->cmt.pc[i].cmcnt);
+                ptimer_set_freq(s->cmt.pc[i].pts, pclk / cks);
+                ptimer_run(s->cmt.pc[i].pts, 0);
+            }
+        }
+    }
+}
+
+static uint32_t sh7262_cmt_read(SH7262State *s, hwaddr addr, unsigned size)
+{
+    if (addr >= SH7262_CMT_BASE_CH1) {
+        return sh7262_cmt_per_channel_read(s, 1, addr - SH7262_CMT_BASE_CH1, size);
+    } else if (addr >= SH7262_CMT_BASE_CH0) {
+        return sh7262_cmt_per_channel_read(s, 0, addr - SH7262_CMT_BASE_CH0, size);
+    } else {
+        return sh7262_cmt_cmstr_read(s, addr, size);
+    }
+}
+
+static void sh7262_cmt_write(SH7262State *s, hwaddr addr,
+                                  uint32_t mem_value, unsigned size)
+{
+    if (addr >= SH7262_CMT_BASE_CH1) {
+        sh7262_cmt_per_channel_write(s, 1, addr - SH7262_CMT_BASE_CH1, mem_value, size);
+    } else if (addr >= SH7262_CMT_BASE_CH0) {
+        sh7262_cmt_per_channel_write(s, 0, addr - SH7262_CMT_BASE_CH0, mem_value, size);
+    } else {
+        sh7262_cmt_cmstr_write(s, addr, mem_value, size);
+    }
+}
 
 static void sh7262_dma_transfer(SH7262State *s, unsigned ch)
 {
@@ -370,10 +510,14 @@ static uint32_t sh7262_peripheral_read(void *opaque, hwaddr addr, unsigned size)
         return sh7262_rspi_read(s, 1, addr - SH7262_RSPI_BASE_CH1, size);
     } else if (SH7262_DMAC_BASE <= addr && addr < (SH7262_DMAC_BASE + SH7262_DMAC_SIZE)) {
         return sh7262_dmac_read(s, addr, size);
+    } else if (SH7262_CMT_CMSTR <= addr && addr < (SH7262_CMT_CMSTR + SH7262_CMT_SIZE)) {
+        return sh7262_cmt_read(s, addr, size);
     } else if (size == 1) {
         switch (addr) {
         case SH7262_FRQCR_LB:
             return GET_LB(s->frqcr);
+        case SH7262_IPR10_LB:
+            return GET_LB(s->ipr10);
         case SH7262_PCCR2_UB:
             return GET_UB(s->pccr2);
         case SH7262_PCCR2_LB:
@@ -390,6 +534,8 @@ static uint32_t sh7262_peripheral_read(void *opaque, hwaddr addr, unsigned size)
             return GET_LB(s->pfcr2);
         case SH7262_STBCR5:
             return s->stbcr5;
+        case SH7262_STBCR7:
+            return s->stbcr7;
         default:
             abort();
         }
@@ -418,10 +564,15 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
         sh7262_rspi_write(s, 1, addr - SH7262_RSPI_BASE_CH1, mem_value, size);
     } else if (SH7262_DMAC_BASE <= addr && addr < (SH7262_DMAC_BASE + SH7262_DMAC_SIZE)) {
         sh7262_dmac_write(s, addr, mem_value, size);
+    } else if (SH7262_CMT_CMSTR <= addr && addr < (SH7262_CMT_CMSTR + SH7262_CMT_SIZE)) {
+        sh7262_cmt_write(s, addr, mem_value, size);
     } else if (size == 1) {
         switch (addr) {
         case SH7262_FRQCR_LB:
             s->frqcr = (s->frqcr & 0xff00) | (mem_value << 0);
+            break;
+        case SH7262_IPR10_LB:
+            s->ipr10 = (s->ipr10 & 0xff00) | (mem_value << 0);
             break;
         case SH7262_PCCR2_UB:
             s->pccr2 = (s->pccr2 & 0x00ff) | (mem_value << 8);
@@ -447,6 +598,9 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
             break;
         case SH7262_STBCR5:
             s->stbcr5 = mem_value;
+            break;
+        case SH7262_STBCR7:
+            s->stbcr7 = mem_value;
             break;
         default:
             abort();
@@ -590,6 +744,9 @@ SH7262State *sh7262_init(SuperHCPU *cpu, MemoryRegion *sysmem)
 
     cpu->env.bn_max = 14;
 
+    s->frqcr = 0x0124; // Mode 0, 1
+    //s->frqcr = 0x0013; // Mode 2, 3
+
     // Internal ROM for Boot startup
     memory_region_init_ram(&s->bootrom, NULL, "bootrom", 0x10000, &error_fatal);
     memory_region_set_readonly(&s->bootrom, true);
@@ -644,6 +801,10 @@ SH7262State *sh7262_init(SuperHCPU *cpu, MemoryRegion *sysmem)
     // SPI bus
     sh7262_rspi_init(s, 0);
     sh7262_rspi_init(s, 1);
+
+    // Compare match timer
+    sh7262_cmt_init(s, 0);
+    sh7262_cmt_init(s, 1);
 
     return s;
 }
