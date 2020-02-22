@@ -114,7 +114,11 @@ static uint32_t sh7262_dmac_per_channel_read(SH7262State *s, unsigned ch, unsign
     if (size == 1) {
         switch (ofs) {
         case OFS_4B(SH7262_CHCR_OFS): return GET_4B(s->dmac.pc[ch].chcr);
+        default:
+            abort();
         }
+    } else {
+        abort();
     }
     return 0;
 }
@@ -142,7 +146,11 @@ static void sh7262_dmac_per_channel_write(SH7262State *s, unsigned ch, unsigned 
                 if (do_tranfer) sh7262_dma_transfer(s, ch);
             }
             break;
+        default:
+            abort();
         }
+    } else {
+        abort();
     }
     
     return 0;
@@ -249,12 +257,13 @@ static uint32_t sh7262_rspi_read(SH7262State *s, unsigned ch, unsigned ofs, unsi
         case SH7262_SPBFCR_OFS:
             return s->rspi[ch].spbfcr;
         }
-    }
-    else if (size == 2) {
+    } else if (size == 2) {
         switch (ofs) {
         case SH7262_SPCMD0_OFS:
             return s->rspi[ch].spcmd0;
         }
+    } else {
+        abort();
     }
     return 0;
 }
@@ -294,14 +303,19 @@ static void sh7262_rspi_write(SH7262State *s, unsigned ch, unsigned ofs,
             s->rspi[ch].spbfcr = mem_value;
             if (SH7262_SPBFCR_RXRST(s->rspi[ch].spbfcr) == SH7262_SPBFCR_RXRST_PERMIT) s->rspi[ch].pos = 0;
             break;
+        default:
+            abort();
         }
-    }
-    else if (size == 2) {
+    } else if (size == 2) {
         switch (ofs) {
         case SH7262_SPCMD0_OFS:
             s->rspi[ch].spcmd0 = mem_value;
             break;
+        default:
+            abort();
         }
+    } else {
+        abort();
     }
     
     return 0;
@@ -313,12 +327,22 @@ static uint32_t sh7262_peripheral_read(void *opaque, hwaddr addr, unsigned size)
 
     if (SH7262_RSPI_BASE_CH0 <= addr && addr < (SH7262_RSPI_BASE_CH0 + SH7262_RSPI_SIZE)) {
         return sh7262_rspi_read(s, 0, addr - SH7262_RSPI_BASE_CH0, size);
-    }
-    if (SH7262_RSPI_BASE_CH1 <= addr && addr < (SH7262_RSPI_BASE_CH1 + SH7262_RSPI_SIZE)) {
+    } else if (SH7262_RSPI_BASE_CH1 <= addr && addr < (SH7262_RSPI_BASE_CH1 + SH7262_RSPI_SIZE)) {
         return sh7262_rspi_read(s, 1, addr - SH7262_RSPI_BASE_CH1, size);
-    }
-    if (SH7262_DMAC_BASE <= addr && addr < (SH7262_DMAC_BASE + SH7262_DMAC_SIZE)) {
+    } else if (SH7262_DMAC_BASE <= addr && addr < (SH7262_DMAC_BASE + SH7262_DMAC_SIZE)) {
         return sh7262_dmac_read(s, addr, size);
+    } else if (size == 1) {
+        switch (addr) {
+        default:
+            abort();
+        }
+    } else if (size == 2) {
+        switch (addr) {
+        default:
+            abort();
+        }
+    } else {
+        abort();
     }
 
     return 0;
@@ -331,40 +355,30 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
 
     if (SH7262_RSPI_BASE_CH0 <= addr && addr < (SH7262_RSPI_BASE_CH0 + SH7262_RSPI_SIZE)) {
         sh7262_rspi_write(s, 0, addr - SH7262_RSPI_BASE_CH0, mem_value, size);
-        return;
-    }
-    if (SH7262_RSPI_BASE_CH1 <= addr && addr < (SH7262_RSPI_BASE_CH1 + SH7262_RSPI_SIZE)) {
+    } else if (SH7262_RSPI_BASE_CH1 <= addr && addr < (SH7262_RSPI_BASE_CH1 + SH7262_RSPI_SIZE)) {
         sh7262_rspi_write(s, 1, addr - SH7262_RSPI_BASE_CH1, mem_value, size);
-        return;
-    }
-    if (SH7262_DMAC_BASE <= addr && addr < (SH7262_DMAC_BASE + SH7262_DMAC_SIZE)) {
-        return sh7262_dmac_write(s, addr, mem_value, size);
-    }
-    if (size == 1)
-    {
-        switch (addr)
-        {
+    } else if (SH7262_DMAC_BASE <= addr && addr < (SH7262_DMAC_BASE + SH7262_DMAC_SIZE)) {
+        sh7262_dmac_write(s, addr, mem_value, size);
+    } else if (size == 1) {
+        switch (addr) {
         case SH7262_PFCR2_UB:
             s->pfcr2 = (s->pfcr2 & 0x00ff) | (mem_value << 8);
             qemu_set_irq(s->cs_lines[0], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PFCR2_PF10MD(s->pfcr2) == SH7262_PFCR2_PF10MD_SSL00)) ? 0 : 1);
             break;
-
         default:
-            break;
+            abort();
         }
-    }
-    else if (size == 2)
-    {
-        switch (addr)
-        {
+    } else if (size == 2) {
+        switch (addr) {
         case SH7262_PFCR2:
             s->pfcr2 = mem_value;
             qemu_set_irq(s->cs_lines[0], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PFCR2_PF10MD(s->pfcr2) == SH7262_PFCR2_PF10MD_SSL00)) ? 0 : 1);
             break;
-
         default:
-            break;
+            abort();
         }
+    } else {
+        abort();
     }
 }
 
