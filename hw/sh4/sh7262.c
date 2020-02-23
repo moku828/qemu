@@ -138,7 +138,16 @@ static void sh7262_cmt_per_channel_write(SH7262State *s, unsigned ch, unsigned o
 {
     if (size == 1) {
         switch (ofs) {
-        case OFS_LB(SH7262_CMCSR_OFS): s->cmt.pc[ch].cmcsr = RPL_LB(s->cmt.pc[ch].cmcsr, mem_value); break;
+        case OFS_LB(SH7262_CMCSR_OFS):
+            {
+                bool prvmatched = (SH7262_CMCSR_CMF(s->cmt.pc[ch].cmcsr) == SH7262_CMCSR_CMF_MATCHED) ? true : false;
+                s->cmt.pc[ch].cmcsr = RPL_LB(s->cmt.pc[ch].cmcsr, mem_value);
+                bool newmatched = (SH7262_CMCSR_CMF(s->cmt.pc[ch].cmcsr) == SH7262_CMCSR_CMF_MATCHED) ? true : false;
+                if ((!newmatched) && (prvmatched != newmatched)) {
+                    qemu_set_irq(s->cmt.pc[ch].cmi, 0);
+                }
+            }            
+            break;
         default:
             abort();
         }
