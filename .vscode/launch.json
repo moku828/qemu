@@ -10,7 +10,11 @@
             "request": "launch",
             "program": "/build/qemu/build/sh4eb-softmmu/qemu-system-sh4eb",
             "args": [
+                "-monitor", "telnet:0.0.0.0:1201,server,nowait",
+                "-serial", "tcp::1202,server,nodelay",
                 "-drive", "file=SPIROM.IMG,if=mtd,format=raw",
+                "-s",
+                "-S",
                 "-trace", "events=/build/qemu/trace.events",
             ],
             "stopAtEntry": true,
