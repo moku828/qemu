@@ -529,11 +529,14 @@ void helper_resbank(CPUSH4State *env)
 {
     int i;
 
+    abort(); // TODO remove here after implement "refer IBNR.BE and IBCR" in helper.c
+
     if (env->sr_bo == 0) {
         if (env->bn > 0) {
             env->bn--;
         } else {
             // TODO bank underflow
+            abort();
         }
         env->pr = env->regbank[18][env->bn];
         env->gbr = env->regbank[17][env->bn];
