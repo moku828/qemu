@@ -111,6 +111,9 @@ typedef struct SH7262State {
     uint16_t pgcr5;
     uint16_t pgior1;
     uint16_t pgdr1;
+    uint16_t pjcr0;
+    uint16_t pjior0;
+    uint16_t pjpr0;
     /* CPU */
     SuperHCPU *cpu;
     /* Bus, controller */
@@ -564,10 +567,16 @@ static uint32_t sh7262_peripheral_read(void *opaque, hwaddr addr, unsigned size)
         switch (addr) {
         case SH7262_ICR0:
             return 0x0000;
+        case SH7262_PFCR2:
+            return s->pfcr2;
         case SH7262_PGCR5:
             return s->pgcr5;
         case SH7262_PGIOR1:
             return s->pgior1;
+        case SH7262_PJCR0:
+            return s->pjcr0;
+        case SH7262_PJIOR0:
+            return s->pjior0;
         default:
             abort();
         }
@@ -655,6 +664,12 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
         case SH7262_PGDR1:
             s->pgdr1 = mem_value;
             qemu_set_irq(s->cs_lines[1], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PGCR5_PG20MD(s->pgcr5) == SH7262_PGCR5_PG20MD_PG20) && (SH7262_PGIOR1_PG20IOR(s->pgior1) == 1) && (SH7262_PGDR1_PG20DR(s->pgdr1) == 0)) ? 0 : 1);
+            break;
+        case SH7262_PJCR0:
+            s->pjcr0 = mem_value;
+            break;
+        case SH7262_PJIOR0:
+            s->pjior0 = mem_value;
             break;
         default:
             abort();
