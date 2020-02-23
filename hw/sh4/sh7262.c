@@ -108,6 +108,8 @@ typedef struct SH7262State {
     uint16_t pcdr0;
     uint16_t pfcr3;
     uint16_t pfcr2;
+    uint16_t pgcr5;
+    uint16_t pgior1;
     uint16_t pgdr1;
     /* CPU */
     SuperHCPU *cpu;
@@ -453,7 +455,7 @@ static void sh7262_rspi_write(SH7262State *s, unsigned ch, unsigned ofs,
             s->rspi[ch].spcr = mem_value;
             if (ch == 0) {
                 qemu_set_irq(s->cs_lines[0], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PFCR2_PF10MD(s->pfcr2) == SH7262_PFCR2_PF10MD_SSL00)) ? 0 : 1);
-                qemu_set_irq(s->cs_lines[1], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PGDR1_PG20DR(s->pgdr1) == 1)) ? 0 : 1);
+                qemu_set_irq(s->cs_lines[1], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PGCR5_PG20MD(s->pgcr5) == SH7262_PGCR5_PG20MD_PG20) && (SH7262_PGIOR1_PG20IOR(s->pgior1) == 1) && (SH7262_PGDR1_PG20DR(s->pgdr1) == 0)) ? 0 : 1);
             }
             break;
         case SH7262_SSLP_OFS:
@@ -549,6 +551,8 @@ static uint32_t sh7262_peripheral_read(void *opaque, hwaddr addr, unsigned size)
             return GET_UB(s->pfcr2);
         case SH7262_PFCR2_LB:
             return GET_LB(s->pfcr2);
+        case SH7262_PGDR1_LB:
+            return GET_LB(s->pgdr1);
         case SH7262_STBCR5:
             return s->stbcr5;
         case SH7262_STBCR7:
@@ -560,6 +564,10 @@ static uint32_t sh7262_peripheral_read(void *opaque, hwaddr addr, unsigned size)
         switch (addr) {
         case SH7262_ICR0:
             return 0x0000;
+        case SH7262_PGCR5:
+            return s->pgcr5;
+        case SH7262_PGIOR1:
+            return s->pgior1;
         default:
             abort();
         }
@@ -615,7 +623,7 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
             break;
         case SH7262_PGDR1_LB:
             s->pgdr1 = (s->pgdr1 & 0xff00) | (mem_value << 0);
-            qemu_set_irq(s->cs_lines[1], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PGDR1_PG20DR(s->pgdr1) == 1)) ? 0 : 1);
+            qemu_set_irq(s->cs_lines[1], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PGCR5_PG20MD(s->pgcr5) == SH7262_PGCR5_PG20MD_PG20) && (SH7262_PGIOR1_PG20IOR(s->pgior1) == 1) && (SH7262_PGDR1_PG20DR(s->pgdr1) == 0)) ? 0 : 1);
             break;
         case SH7262_STBCR5:
             s->stbcr5 = mem_value;
@@ -638,9 +646,15 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
             s->pfcr2 = mem_value;
             qemu_set_irq(s->cs_lines[0], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PFCR2_PF10MD(s->pfcr2) == SH7262_PFCR2_PF10MD_SSL00)) ? 0 : 1);
             break;
+        case SH7262_PGCR5:
+            s->pgcr5 = mem_value;
+            break;
+        case SH7262_PGIOR1:
+            s->pgior1 = mem_value;
+            break;
         case SH7262_PGDR1:
             s->pgdr1 = mem_value;
-            qemu_set_irq(s->cs_lines[1], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PGDR1_PG20DR(s->pgdr1) == 1)) ? 0 : 1);
+            qemu_set_irq(s->cs_lines[1], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PGCR5_PG20MD(s->pgcr5) == SH7262_PGCR5_PG20MD_PG20) && (SH7262_PGIOR1_PG20IOR(s->pgior1) == 1) && (SH7262_PGDR1_PG20DR(s->pgdr1) == 0)) ? 0 : 1);
             break;
         default:
             abort();
