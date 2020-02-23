@@ -577,6 +577,8 @@ static uint32_t sh7262_peripheral_read(void *opaque, hwaddr addr, unsigned size)
             return s->pjcr0;
         case SH7262_PJIOR0:
             return s->pjior0;
+        case SH7262_PJPR0:
+            return s->pjpr0;
         default:
             abort();
         }
@@ -802,6 +804,7 @@ SH7262State *sh7262_init(SuperHCPU *cpu, MemoryRegion *sysmem)
 
     s->frqcr = 0x0124; // Mode 0, 1
     //s->frqcr = 0x0013; // Mode 2, 3
+    s->pjpr0 = 0x0008; // PJ1:CD = L(SD card is available), PJ3:WP = H(Protected)
 
     // Internal ROM for Boot startup
     memory_region_init_ram(&s->bootrom, NULL, "bootrom", 0x10000, &error_fatal);
