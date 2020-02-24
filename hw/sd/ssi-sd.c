@@ -48,6 +48,7 @@ typedef struct {
     int32_t stopping;
     SDBus sdbus;
     bool select;
+    int cnt;
 } ssi_sd_state;
 
 #define TYPE_SSI_SD "ssi-sd"
@@ -192,8 +193,12 @@ static uint32_t ssi_sd_transfer(SSISlave *dev, uint32_t val)
     case SSI_SD_DATA_START:
         DPRINTF("Start read block\n");
         s->mode = SSI_SD_DATA_READ;
+        s->cnt = 0;
         return 0xfe;
     case SSI_SD_DATA_READ:
+        if (s->cnt >= 512 && s->cnt <= 513) { s->cnt++; return 0xcd; }
+        if (s->cnt >= 514) { s->cnt = 0; s->mode = SSI_SD_DATA_START; return 0xff; }
+        s->cnt++;
         val = sdbus_read_data(&s->sdbus);
         if (!sdbus_data_ready(&s->sdbus)) {
             DPRINTF("Data read end\n");
