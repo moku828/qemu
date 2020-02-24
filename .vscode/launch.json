@@ -13,6 +13,7 @@
                 "-monitor", "telnet:0.0.0.0:1201,server,nowait",
                 "-serial", "tcp::1202,server,nodelay",
                 "-drive", "file=SPIROM.IMG,if=mtd,format=raw",
+                "-drive", "file=lyricspanel_sdcard_fullcontents.img,if=sd,format=raw",
                 "-s",
                 "-S",
                 "-trace", "events=/build/qemu/trace.events",
