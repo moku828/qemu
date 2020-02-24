@@ -114,7 +114,7 @@ static uint32_t ssi_sd_transfer(SSISlave *dev, uint32_t val)
                 /* CMD58 returns R3 response (OCR)  */
                 DPRINTF("Returned OCR\n");
                 s->arglen = 5;
-                s->response[0] = 1;
+                s->response[0] = 0;
                 memcpy(&s->response[1], longresp, 4);
             } else if (s->arglen != 4) {
                 BADF("Unexpected response to cmd %d\n", s->cmd);
