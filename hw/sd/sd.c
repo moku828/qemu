@@ -1688,7 +1688,8 @@ int sd_do_command(SDState *sd, SDRequest *req,
          */
         sd->current_cmd = req->cmd;
         sd->card_status &= ~CURRENT_STATE;
-        sd->card_status |= (last_state << 9);
+        if (sd->state != 0)
+            sd->card_status |= (last_state << 9);
     }
 
 send_response:
