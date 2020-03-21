@@ -665,9 +665,11 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
             break;
         case SH7262_PCDR0_UB:
             s->pcdr0 = (s->pcdr0 & 0x00ff) | (mem_value << 8);
+            qemu_set_irq(s->cs_lines[1], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PCCR1_PC7MD(s->pccr1) == SH7262_PCCR1_PC7MD_PC7) && (SH7262_PCIOR0_PC7IOR(s->pcior0) == 1) && (SH7262_PCDR0_PC7DR(s->pcdr0) == 0)) ? 0 : 1);
             break;
         case SH7262_PCDR0_LB:
             s->pcdr0 = (s->pcdr0 & 0xff00) | (mem_value << 0);
+            qemu_set_irq(s->cs_lines[1], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PCCR1_PC7MD(s->pccr1) == SH7262_PCCR1_PC7MD_PC7) && (SH7262_PCIOR0_PC7IOR(s->pcior0) == 1) && (SH7262_PCDR0_PC7DR(s->pcdr0) == 0)) ? 0 : 1);
             break;
         case SH7262_PFCR3_LB:
             s->pfcr3 = (s->pfcr3 & 0xff00) | (mem_value << 0);
@@ -711,6 +713,7 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
             break;
         case SH7262_PCDR0:
             s->pcdr0 = mem_value;
+            qemu_set_irq(s->cs_lines[1], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PCCR1_PC7MD(s->pccr1) == SH7262_PCCR1_PC7MD_PC7) && (SH7262_PCIOR0_PC7IOR(s->pcior0) == 1) && (SH7262_PCDR0_PC7DR(s->pcdr0) == 0)) ? 0 : 1);
             break;
         case SH7262_PFCR3:
             s->pfcr3 = mem_value;
