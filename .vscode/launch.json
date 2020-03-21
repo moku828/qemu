@@ -25,7 +25,7 @@
             "pipeTransport": {
                 "pipeCwd": "",
                 "pipeProgram": "docker.exe",
-                "pipeArgs": ["exec","-i","debug_qemu","sh","-c"],
+                "pipeArgs": ["exec","-i","qemu00","sh","-c"],
                 "debuggerPath": "/usr/bin/gdb"
             },
             "MIMode": "gdb",
