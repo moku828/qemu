@@ -568,8 +568,10 @@ static uint32_t sh7262_peripheral_read(void *opaque, hwaddr addr, unsigned size)
         case SH7262_PCIOR0_UB:
             return GET_UB(s->pcior0);
         case SH7262_PCDR0_UB:
+        case SH7262_PCPR0_UB:
             return GET_UB(s->pcdr0);
         case SH7262_PCDR0_LB:
+        case SH7262_PCPR0_LB:
             return GET_LB(s->pcdr0);
         case SH7262_PFCR3_LB:
             return GET_LB(s->pfcr3);
@@ -601,6 +603,7 @@ static uint32_t sh7262_peripheral_read(void *opaque, hwaddr addr, unsigned size)
         case SH7262_PCCR1:
             return s->pccr1;
         case SH7262_PCDR0:
+        case SH7262_PCPR0:
             return s->pcdr0;
         case SH7262_PFCR2:
             return s->pfcr2;
