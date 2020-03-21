@@ -132,6 +132,12 @@ static uint32_t sh7262_cmt_per_channel_read(SH7262State *s, unsigned ch, unsigne
         default:
             abort();
         }
+    } else if (size == 2) {
+        switch (ofs) {
+        case SH7262_CMCSR_OFS: return s->cmt.pc[ch].cmcsr;
+        default:
+            abort();
+        }
     } else {
         abort();
     }
@@ -158,6 +164,16 @@ static void sh7262_cmt_per_channel_write(SH7262State *s, unsigned ch, unsigned o
         }
     } else if (size == 2) {
         switch (ofs) {
+        case SH7262_CMCSR_OFS:
+            {
+                bool prvmatched = (SH7262_CMCSR_CMF(s->cmt.pc[ch].cmcsr) == SH7262_CMCSR_CMF_MATCHED) ? true : false;
+                s->cmt.pc[ch].cmcsr = mem_value;
+                bool newmatched = (SH7262_CMCSR_CMF(s->cmt.pc[ch].cmcsr) == SH7262_CMCSR_CMF_MATCHED) ? true : false;
+                if ((!newmatched) && (prvmatched != newmatched)) {
+                    qemu_set_irq(s->cmt.pc[ch].cmi, 0);
+                }
+            }            
+            break;
         case SH7262_CMCOR_OFS: s->cmt.pc[ch].cmcor = mem_value; break;
         default:
             abort();
@@ -565,6 +581,10 @@ static uint32_t sh7262_peripheral_read(void *opaque, hwaddr addr, unsigned size)
         }
     } else if (size == 2) {
         switch (addr) {
+        case SH7262_FRQCR:
+            return s->frqcr;
+        case SH7262_IPR10:
+            return s->ipr10;
         case SH7262_ICR0:
             return 0x0000;
         case SH7262_PFCR2:
@@ -649,6 +669,9 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
         switch (addr) {
         case SH7262_FRQCR:
             s->frqcr = mem_value;
+            break;
+        case SH7262_IPR10:
+            s->ipr10 = mem_value;
             break;
         case SH7262_PFCR3:
             s->pfcr3 = mem_value;
@@ -809,7 +832,7 @@ SH7262State *sh7262_init(SuperHCPU *cpu, MemoryRegion *sysmem)
     // Internal ROM for Boot startup
     memory_region_init_ram(&s->bootrom, NULL, "bootrom", 0x10000, &error_fatal);
     memory_region_set_readonly(&s->bootrom, true);
-    memory_region_add_subregion(sysmem, 0x40000000, &s->bootrom);
+    memory_region_add_subregion(sysmem, 0xA0000000, &s->bootrom);
     ret = load_image_mr("bootrom.bin", &s->bootrom);
     if (ret < 0 && !qtest_enabled()) {
         error_report("Could not load SH7262 bootrom '%s'", "bootrom.bin");
