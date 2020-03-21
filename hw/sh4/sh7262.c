@@ -104,6 +104,7 @@ typedef struct SH7262State {
     uint16_t stbcr7;
     uint16_t ipr10;
     uint16_t pccr2;
+    uint16_t pccr1;
     uint16_t pcior0;
     uint16_t pcdr0;
     uint16_t pfcr3;
@@ -560,6 +561,10 @@ static uint32_t sh7262_peripheral_read(void *opaque, hwaddr addr, unsigned size)
             return GET_UB(s->pccr2);
         case SH7262_PCCR2_LB:
             return GET_LB(s->pccr2);
+        case SH7262_PCCR1_UB:
+            return GET_UB(s->pccr1);
+        case SH7262_PCCR1_LB:
+            return GET_LB(s->pccr1);
         case SH7262_PCIOR0_UB:
             return GET_UB(s->pcior0);
         case SH7262_PCDR0_UB:
@@ -587,6 +592,12 @@ static uint32_t sh7262_peripheral_read(void *opaque, hwaddr addr, unsigned size)
             return s->ipr10;
         case SH7262_ICR0:
             return 0x0000;
+        case SH7262_PCIOR0:
+            return s->pcior0;
+        case SH7262_PCCR2:
+            return s->pccr2;
+        case SH7262_PCCR1:
+            return s->pccr1;
         case SH7262_PFCR2:
             return s->pfcr2;
         case SH7262_PGCR5:
@@ -636,6 +647,12 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
         case SH7262_PCCR2_LB:
             s->pccr2 = (s->pccr2 & 0xff00) | (mem_value << 0);
             break;
+        case SH7262_PCCR1_UB:
+            s->pccr1 = (s->pccr1 & 0x00ff) | (mem_value << 8);
+            break;
+        case SH7262_PCCR1_LB:
+            s->pccr1 = (s->pccr1 & 0xff00) | (mem_value << 0);
+            break;
         case SH7262_PCIOR0_UB:
             s->pcior0 = (s->pcior0 & 0x00ff) | (mem_value << 8);
             break;
@@ -672,6 +689,15 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
             break;
         case SH7262_IPR10:
             s->ipr10 = mem_value;
+            break;
+        case SH7262_PCIOR0:
+            s->pcior0 = mem_value;
+            break;
+        case SH7262_PCCR2:
+            s->pccr2 = mem_value;
+            break;
+        case SH7262_PCCR1:
+            s->pccr1 = mem_value;
             break;
         case SH7262_PFCR3:
             s->pfcr3 = mem_value;
