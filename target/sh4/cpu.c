@@ -193,7 +193,7 @@ static void sh7262_cpu_initfn(Object *obj)
     CPUSH4State *env = &cpu->env;
 
     env->id = SH_CPU_SH7262;
-    env->features = SH_FEATURE_SH4A;
+    env->features = SH_FEATURE_SH2A;
 }
 
 static void sh7262_class_init(ObjectClass *oc, void *data)

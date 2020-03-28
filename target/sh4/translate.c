@@ -52,7 +52,7 @@ typedef struct DisasContext {
 #if defined(CONFIG_USER_ONLY)
 #define IS_USER(ctx) 1
 #else
-#define IS_USER(ctx) (!(ctx->tbflags & (1u << SR_MD)))
+#define IS_USER(ctx) ((ctx->features & SH_FEATURE_SH2A) ? 0 : (!(ctx->tbflags & (1u << SR_MD))))
 #endif
 
 /* Target-specific values for ctx->base.is_jmp.  */
