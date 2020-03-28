@@ -110,7 +110,26 @@ typedef struct SH7262State {
     uint8_t stbcr8;
     uint8_t syscr1;
     uint8_t syscr2;
+    uint16_t ipr01;
+    uint16_t ipr02;
+    uint16_t ipr05;
+    uint16_t ipr06;
+    uint16_t ipr07;
+    uint16_t ipr08;
+    uint16_t ipr09;
     uint16_t ipr10;
+    uint16_t ipr11;
+    uint16_t ipr12;
+    uint16_t ipr13;
+    uint16_t ipr14;
+    uint16_t ipr15;
+    uint16_t ipr16;
+    uint16_t ipr17;
+    uint16_t ipr18;
+    uint16_t ipr19;
+    uint16_t ipr20;
+    uint16_t ipr21;
+    uint16_t ipr22;
     uint16_t icr0;
     uint16_t icr1;
     uint16_t ibnr;
@@ -621,8 +640,46 @@ static uint32_t sh7262_peripheral_read(void *opaque, hwaddr addr, unsigned size)
         switch (addr) {
         case SH7262_FRQCR:
             return s->frqcr;
+        case SH7262_IPR01:
+            return s->ipr01;
+        case SH7262_IPR02:
+            return s->ipr02;
+        case SH7262_IPR05:
+            return s->ipr05;
+        case SH7262_IPR06:
+            return s->ipr06;
+        case SH7262_IPR07:
+            return s->ipr07;
+        case SH7262_IPR08:
+            return s->ipr08;
+        case SH7262_IPR09:
+            return s->ipr09;
         case SH7262_IPR10:
             return s->ipr10;
+        case SH7262_IPR11:
+            return s->ipr11;
+        case SH7262_IPR12:
+            return s->ipr12;
+        case SH7262_IPR13:
+            return s->ipr13;
+        case SH7262_IPR14:
+            return s->ipr14;
+        case SH7262_IPR15:
+            return s->ipr15;
+        case SH7262_IPR16:
+            return s->ipr16;
+        case SH7262_IPR17:
+            return s->ipr17;
+        case SH7262_IPR18:
+            return s->ipr18;
+        case SH7262_IPR19:
+            return s->ipr19;
+        case SH7262_IPR20:
+            return s->ipr20;
+        case SH7262_IPR21:
+            return s->ipr21;
+        case SH7262_IPR22:
+            return s->ipr22;
         case SH7262_ICR0:
             return s->icr0;
         case SH7262_ICR1:
@@ -756,8 +813,65 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
         case SH7262_FRQCR:
             s->frqcr = mem_value;
             break;
+        case SH7262_IPR01:
+            s->ipr01 = mem_value;
+            break;
+        case SH7262_IPR02:
+            s->ipr02 = mem_value;
+            break;
+        case SH7262_IPR05:
+            s->ipr05 = mem_value;
+            break;
+        case SH7262_IPR06:
+            s->ipr06 = mem_value;
+            break;
+        case SH7262_IPR07:
+            s->ipr07 = mem_value;
+            break;
+        case SH7262_IPR08:
+            s->ipr08 = mem_value;
+            break;
+        case SH7262_IPR09:
+            s->ipr09 = mem_value;
+            break;
         case SH7262_IPR10:
             s->ipr10 = mem_value;
+            break;
+        case SH7262_IPR11:
+            s->ipr11 = mem_value;
+            break;
+        case SH7262_IPR12:
+            s->ipr12 = mem_value;
+            break;
+        case SH7262_IPR13:
+            s->ipr13 = mem_value;
+            break;
+        case SH7262_IPR14:
+            s->ipr14 = mem_value;
+            break;
+        case SH7262_IPR15:
+            s->ipr15 = mem_value;
+            break;
+        case SH7262_IPR16:
+            s->ipr16 = mem_value;
+            break;
+        case SH7262_IPR17:
+            s->ipr17 = mem_value;
+            break;
+        case SH7262_IPR18:
+            s->ipr18 = mem_value;
+            break;
+        case SH7262_IPR19:
+            s->ipr19 = mem_value;
+            break;
+        case SH7262_IPR20:
+            s->ipr20 = mem_value;
+            break;
+        case SH7262_IPR21:
+            s->ipr21 = mem_value;
+            break;
+        case SH7262_IPR22:
+            s->ipr22 = mem_value;
             break;
         case SH7262_ICR0:
             s->icr0 = (s->icr0 & ~0x0101U) | (mem_value & 0x0101U);
