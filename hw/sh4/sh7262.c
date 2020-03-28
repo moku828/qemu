@@ -100,8 +100,8 @@ typedef struct SH7262State {
     MemoryRegion peripheral_fffc;
     AddressSpace sysmem_as;
     uint16_t frqcr;
-    uint16_t stbcr5;
-    uint16_t stbcr7;
+    uint8_t stbcr5;
+    uint8_t stbcr7;
     uint16_t ipr10;
     uint16_t pccr2;
     uint16_t pccr1;
