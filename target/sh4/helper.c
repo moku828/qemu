@@ -181,7 +181,7 @@ void superh_cpu_do_interrupt(CPUState *cs)
     env->spc = env->pc;
     env->sgr = env->gregs[15];
     env->sr |= (1u << SR_BL) | (1u << SR_MD) | (1u << SR_RB);
-    if (env->id == SH_CPU_SH7262)
+    if (env->features == SH_FEATURE_SH2A)
         env->sr &= ~((1u << SR_RB) | (1u << SR_BL));
     env->lock_addr = -1;
 
@@ -229,7 +229,7 @@ void superh_cpu_do_interrupt(CPUState *cs)
     if (do_irq) {
         env->intevt = irq_vector;
         env->pc = env->vbr + 0x600;
-        if (env->id == SH_CPU_SH7262) {
+        if (env->features == SH_FEATURE_SH2A) {
             if (0) // TODO refer IBNR.BE and IBCR
             {
                 int i;
@@ -478,7 +478,7 @@ static int get_physical_address(CPUSH4State * env, target_ulong * physical,
                                 int *prot, target_ulong address,
                                 int rw, int access_type)
 {
-    if (env->id == SH_CPU_SH7262)
+    if (env->features == SH_FEATURE_SH2A)
     {
 	*physical = address & 0xFFFFFFFF;
 	*prot = PAGE_READ | PAGE_WRITE | PAGE_EXEC;
