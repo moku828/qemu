@@ -100,8 +100,14 @@ typedef struct SH7262State {
     MemoryRegion peripheral_fffc;
     AddressSpace sysmem_as;
     uint16_t frqcr;
+    uint8_t stbcr1;
+    uint8_t stbcr2;
+    uint8_t stbcr3;
+    uint8_t stbcr4;
     uint8_t stbcr5;
+    uint8_t stbcr6;
     uint8_t stbcr7;
+    uint8_t stbcr8;
     uint16_t ipr10;
     uint16_t pccr2;
     uint16_t pccr1;
@@ -581,10 +587,22 @@ static uint32_t sh7262_peripheral_read(void *opaque, hwaddr addr, unsigned size)
             return GET_LB(s->pfcr2);
         case SH7262_PGDR1_LB:
             return GET_LB(s->pgdr1);
+        case SH7262_STBCR1:
+            return s->stbcr1;
+        case SH7262_STBCR2:
+            return s->stbcr2;
+        case SH7262_STBCR3:
+            return s->stbcr3;
+        case SH7262_STBCR4:
+            return s->stbcr4;
         case SH7262_STBCR5:
             return s->stbcr5;
+        case SH7262_STBCR6:
+            return s->stbcr6;
         case SH7262_STBCR7:
             return s->stbcr7;
+        case SH7262_STBCR8:
+            return s->stbcr8;
         default:
             abort();
         }
@@ -685,11 +703,29 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
             s->pgdr1 = (s->pgdr1 & 0xff00) | (mem_value << 0);
             qemu_set_irq(s->cs_lines[1], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PGCR5_PG20MD(s->pgcr5) == SH7262_PGCR5_PG20MD_PG20) && (SH7262_PGIOR1_PG20IOR(s->pgior1) == 1) && (SH7262_PGDR1_PG20DR(s->pgdr1) == 0)) ? 0 : 1);
             break;
+        case SH7262_STBCR1:
+            s->stbcr1 = mem_value;
+            break;
+        case SH7262_STBCR2:
+            s->stbcr2 = mem_value;
+            break;
+        case SH7262_STBCR3:
+            s->stbcr3 = mem_value;
+            break;
+        case SH7262_STBCR4:
+            s->stbcr4 = mem_value;
+            break;
         case SH7262_STBCR5:
             s->stbcr5 = mem_value;
             break;
+        case SH7262_STBCR6:
+            s->stbcr6 = mem_value;
+            break;
         case SH7262_STBCR7:
             s->stbcr7 = mem_value;
+            break;
+        case SH7262_STBCR8:
+            s->stbcr8 = mem_value;
             break;
         default:
             abort();
