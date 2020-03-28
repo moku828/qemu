@@ -113,6 +113,7 @@ typedef struct SH7262State {
     uint16_t ipr10;
     uint16_t icr0;
     uint16_t icr1;
+    uint16_t ibnr;
     uint16_t pccr2;
     uint16_t pccr1;
     uint16_t pcior0;
@@ -626,6 +627,8 @@ static uint32_t sh7262_peripheral_read(void *opaque, hwaddr addr, unsigned size)
             return s->icr0;
         case SH7262_ICR1:
             return s->icr1;
+        case SH7262_IBNR:
+            return s->ibnr;
         case SH7262_PCIOR0:
             return s->pcior0;
         case SH7262_PCCR2:
@@ -761,6 +764,9 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
             break;
         case SH7262_ICR1:
             s->icr1 = mem_value;
+            break;
+        case SH7262_IBNR:
+            s->ibnr = mem_value;
             break;
         case SH7262_PCIOR0:
             s->pcior0 = mem_value;
