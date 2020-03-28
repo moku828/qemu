@@ -182,7 +182,7 @@ void superh_cpu_do_interrupt(CPUState *cs)
     env->sgr = env->gregs[15];
     env->sr |= (1u << SR_BL) | (1u << SR_MD) | (1u << SR_RB);
     if (env->features == SH_FEATURE_SH2A)
-        env->sr &= ~((1u << SR_RB) | (1u << SR_BL));
+        env->sr &= ~((1u << SR_RB) | (1u << SR_BL) | (1u << SR_MD));
     env->lock_addr = -1;
 
     if (env->flags & DELAY_SLOT_MASK) {
