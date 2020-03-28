@@ -905,6 +905,14 @@ SH7262State *sh7262_init(SuperHCPU *cpu, MemoryRegion *sysmem)
 
     s->frqcr = 0x0124; // Mode 0, 1
     //s->frqcr = 0x0013; // Mode 2, 3
+    s->stbcr1 = 0x00;
+    s->stbcr2 = 0x00;
+    s->stbcr3 = 0x7F;
+    s->stbcr4 = 0xFF;
+    s->stbcr5 = 0xFF;
+    s->stbcr6 = 0xFF;
+    s->stbcr7 = 0xFF;
+    s->stbcr8 = 0xFF;
     s->pjpr0 = 0x0008; // PJ1:CD = L(SD card is available), PJ3:WP = H(Protected)
 
     // Internal ROM for Boot startup
