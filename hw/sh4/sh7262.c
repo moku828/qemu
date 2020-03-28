@@ -144,6 +144,7 @@ static uint32_t sh7262_cmt_per_channel_read(SH7262State *s, unsigned ch, unsigne
     } else if (size == 2) {
         switch (ofs) {
         case SH7262_CMCSR_OFS: return s->cmt.pc[ch].cmcsr;
+        case SH7262_CMCNT_OFS: return s->cmt.pc[ch].cmcnt;
         default:
             abort();
         }
@@ -184,6 +185,7 @@ static void sh7262_cmt_per_channel_write(SH7262State *s, unsigned ch, unsigned o
             }            
             break;
         case SH7262_CMCOR_OFS: s->cmt.pc[ch].cmcor = mem_value; break;
+        case SH7262_CMCNT_OFS: s->cmt.pc[ch].cmcnt = mem_value; break;
         default:
             abort();
         }
