@@ -108,6 +108,8 @@ typedef struct SH7262State {
     uint8_t stbcr6;
     uint8_t stbcr7;
     uint8_t stbcr8;
+    uint8_t syscr1;
+    uint8_t syscr2;
     uint16_t ipr10;
     uint16_t pccr2;
     uint16_t pccr1;
@@ -603,6 +605,10 @@ static uint32_t sh7262_peripheral_read(void *opaque, hwaddr addr, unsigned size)
             return s->stbcr7;
         case SH7262_STBCR8:
             return s->stbcr8;
+        case SH7262_SYSCR1:
+            return s->syscr1;
+        case SH7262_SYSCR2:
+            return s->syscr2;
         default:
             abort();
         }
@@ -726,6 +732,12 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
             break;
         case SH7262_STBCR8:
             s->stbcr8 = mem_value;
+            break;
+        case SH7262_SYSCR1:
+            s->syscr1 = mem_value;
+            break;
+        case SH7262_SYSCR2:
+            s->syscr2 = mem_value;
             break;
         default:
             abort();
@@ -913,6 +925,8 @@ SH7262State *sh7262_init(SuperHCPU *cpu, MemoryRegion *sysmem)
     s->stbcr6 = 0xFF;
     s->stbcr7 = 0xFF;
     s->stbcr8 = 0xFF;
+    s->syscr1 = 0xFF;
+    s->syscr2 = 0xFF;
     s->pjpr0 = 0x0008; // PJ1:CD = L(SD card is available), PJ3:WP = H(Protected)
 
     // Internal ROM for Boot startup
