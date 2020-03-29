@@ -139,6 +139,8 @@ typedef struct SH7262State {
     uint16_t pcdr0;
     uint16_t pfcr3;
     uint16_t pfcr2;
+    uint16_t pfcr1;
+    uint16_t pfcr0;
     uint16_t pgcr5;
     uint16_t pgior1;
     uint16_t pgdr1;
@@ -697,6 +699,10 @@ static uint32_t sh7262_peripheral_read(void *opaque, hwaddr addr, unsigned size)
             return s->pcdr0;
         case SH7262_PFCR2:
             return s->pfcr2;
+        case SH7262_PFCR1:
+            return s->pfcr1;
+        case SH7262_PFCR0:
+            return s->pfcr0;
         case SH7262_PGCR5:
             return s->pgcr5;
         case SH7262_PGIOR1:
@@ -901,6 +907,12 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
         case SH7262_PFCR2:
             s->pfcr2 = mem_value;
             qemu_set_irq(s->cs_lines[0], ((SH7262_SPCR_SPE(s->rspi[0].spcr) == SH7262_SPCR_SPE_ENABLE) && (SH7262_PFCR2_PF10MD(s->pfcr2) == SH7262_PFCR2_PF10MD_SSL00)) ? 0 : 1);
+            break;
+        case SH7262_PFCR1:
+            s->pfcr1 = mem_value;
+            break;
+        case SH7262_PFCR0:
+            s->pfcr0 = mem_value;
             break;
         case SH7262_PGCR5:
             s->pgcr5 = mem_value;
