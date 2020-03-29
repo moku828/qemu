@@ -32,7 +32,7 @@
         {
             "label": "prelaunch gdb",
             "type": "shell",
-            "command": "docker run --privileged -v${workspaceFolder}:/build/qemu --name qemu00 -i -d --entrypoint=/bin/sh -p 1201:1201 -p 1202:1202 sh-tools/qemu_buildenv"
+            "command": "docker run --privileged -v${workspaceFolder}:/build/qemu --name qemu00 -i -d --entrypoint=/bin/sh -p 1201:1201 -p 1202:1202 -p 1203:1203 -p 1204:1204 sh-tools/qemu_buildenv"
         },
         {
             "label": "postdebug gdb",
