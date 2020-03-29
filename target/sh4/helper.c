@@ -230,7 +230,20 @@ void superh_cpu_do_interrupt(CPUState *cs)
         env->intevt = irq_vector;
         env->pc = env->vbr + 0x600;
         if (env->features == SH_FEATURE_SH2A) {
-            if (0) // TODO refer IBNR.BE and IBCR
+            uint16_t ibnr = cpu_lduw_data(env, 0xFFFE080E);
+            uint16_t ibcr = cpu_lduw_data(env, 0xFFFE080C);
+            uint8_t be = (ibnr >> 14) & 0x03;
+            bool bankenable = false;
+            switch (be)
+            {
+            case 1:
+                bankenable = true;
+                break;
+            case 3:
+                if (ibcr != 0x0000) bankenable = true;
+                break;
+            }
+            if (bankenable)
             {
                 int i;
                 if (env->bn < env->bn_max) {
