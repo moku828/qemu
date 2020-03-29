@@ -142,7 +142,13 @@ typedef struct SH7262State {
     uint16_t pfcr1;
     uint16_t pfcr0;
     uint16_t pfior0;
+    uint16_t pgcr7;
     uint16_t pgcr5;
+    uint16_t pgcr4;
+    uint16_t pgcr3;
+    uint16_t pgcr2;
+    uint16_t pgcr1;
+    uint16_t pgcr0;
     uint16_t pgior1;
     uint16_t pgdr1;
     uint16_t pjcr0;
@@ -706,8 +712,20 @@ static uint32_t sh7262_peripheral_read(void *opaque, hwaddr addr, unsigned size)
             return s->pfcr0;
         case SH7262_PFIOR0:
             return s->pfior0;
+        case SH7262_PGCR7:
+            return s->pgcr7;
         case SH7262_PGCR5:
             return s->pgcr5;
+        case SH7262_PGCR4:
+            return s->pgcr4;
+        case SH7262_PGCR3:
+            return s->pgcr3;
+        case SH7262_PGCR2:
+            return s->pgcr2;
+        case SH7262_PGCR1:
+            return s->pgcr1;
+        case SH7262_PGCR0:
+            return s->pgcr0;
         case SH7262_PGIOR1:
             return s->pgior1;
         case SH7262_PJCR0:
@@ -920,8 +938,26 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
         case SH7262_PFIOR0:
             s->pfior0 = mem_value;
             break;
+        case SH7262_PGCR7:
+            s->pgcr7 = mem_value;
+            break;
         case SH7262_PGCR5:
             s->pgcr5 = mem_value;
+            break;
+        case SH7262_PGCR4:
+            s->pgcr4 = mem_value;
+            break;
+        case SH7262_PGCR3:
+            s->pgcr3 = mem_value;
+            break;
+        case SH7262_PGCR2:
+            s->pgcr2 = mem_value;
+            break;
+        case SH7262_PGCR1:
+            s->pgcr1 = mem_value;
+            break;
+        case SH7262_PGCR0:
+            s->pgcr0 = mem_value;
             break;
         case SH7262_PGIOR1:
             s->pgior1 = mem_value;
