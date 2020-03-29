@@ -951,6 +951,7 @@ enum {
 	IRQ0, IRQ1, IRQ2, IRQ3,
 	IRQ4, IRQ5, IRQ6, IRQ7,
     CMI0, CMI1,
+    SCIF3_BRI, SCIF3_ERI, SCIF3_RXI, SCIF3_TXI, 
 
 	/* interrupt groups */
 
@@ -963,6 +964,8 @@ static struct intc_vect vectors[] = {
 	INTC_VECT(IRQ4, 68), INTC_VECT(IRQ5, 69),
 	INTC_VECT(IRQ6, 70), INTC_VECT(IRQ7, 71),
 	INTC_VECT(CMI0, 175), INTC_VECT(CMI1, 176),
+	INTC_VECT(SCIF3_BRI, 244), INTC_VECT(SCIF3_ERI, 245),
+	INTC_VECT(SCIF3_RXI, 246), INTC_VECT(SCIF3_TXI, 247),
 };
 
 static struct intc_group groups[] = {
@@ -1132,6 +1135,16 @@ SH7262State *sh7262_init(SuperHCPU *cpu, MemoryRegion *sysmem)
     // Compare match timer
     sh7262_cmt_init(s, 0, s->intc.irqs[CMI0]);
     sh7262_cmt_init(s, 1, s->intc.irqs[CMI1]);
+
+    // Serial Communication Interface with FIFO
+    sh_serial_init(sysmem, SH7262_SCIF_BASE_CH3,
+                   SH_SERIAL_FEAT_SCIF,
+                   24 * 1000 * 1000, serial_hd(1),
+                   s->intc.irqs[SCIF3_ERI],
+                   s->intc.irqs[SCIF3_RXI],
+                   s->intc.irqs[SCIF3_TXI],
+                   NULL,
+                   s->intc.irqs[SCIF3_BRI]);
 
     return s;
 }
