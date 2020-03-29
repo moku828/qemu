@@ -248,13 +248,13 @@ void superh_cpu_do_interrupt(CPUState *cs)
                 int i;
                 if (env->bn < env->bn_max) {
                     for (i = 0; i <= 14; i++) {
-                        env->regbank[i][env->bn] = env->gregs[i];
+                        env->regbank[env->bn][i] = env->gregs[i];
                     }
-                    env->regbank[15][env->bn] = env->mach;
-                    env->regbank[16][env->bn] = env->macl;
-                    env->regbank[17][env->bn] = env->gbr;
-                    env->regbank[18][env->bn] = env->pr;
-                    env->regbank[19][env->bn] = irq_vector;
+                    env->regbank[env->bn][15] = env->mach;
+                    env->regbank[env->bn][16] = env->macl;
+                    env->regbank[env->bn][17] = env->gbr;
+                    env->regbank[env->bn][18] = env->pr;
+                    env->regbank[env->bn][19] = irq_vector;
                     env->bn++;
                 } else {
                     env->gregs[15] -= 4;
