@@ -728,6 +728,8 @@ static uint32_t sh7262_peripheral_read(void *opaque, hwaddr addr, unsigned size)
             return s->pgcr0;
         case SH7262_PGIOR1:
             return s->pgior1;
+        case SH7262_PGDR1:
+            return s->pgdr1;
         case SH7262_PJCR0:
             return s->pjcr0;
         case SH7262_PJIOR0:
