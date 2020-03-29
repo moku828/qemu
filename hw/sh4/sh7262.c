@@ -90,6 +90,23 @@ typedef struct {
   uint16_t dmars[8];
 } SH7262_DMAC;
 
+typedef struct {
+  uint32_t grcmen2;
+  uint32_t grcbuscnt2;
+  uint32_t gropsadr2;
+  uint32_t gropswh2;
+  uint32_t gropsofst2;
+  uint32_t gropdphv2;
+  uint32_t sgmode;
+  uint32_t sgintcnt;
+  uint32_t syncnt;
+  uint32_t panel_clksel;
+  uint32_t syn_size;
+  uint32_t panel_vsync_tim;
+  uint32_t panel_hsync_tim;
+  uint32_t gra_vsync_tim;
+} SH7262_VDC3;
+
 typedef struct SH7262State {
     MemoryRegion bootrom;
     MemoryRegion fastram;
@@ -162,6 +179,7 @@ typedef struct SH7262State {
     qemu_irq cs_lines[2];
     SH7262_DMAC dmac;
     SH7262_CMT cmt;
+    SH7262_VDC3 vdc3;
 } SH7262State;
 
 static uint32_t sh7262_cmt_per_channel_read(SH7262State *s, unsigned ch, unsigned ofs, unsigned size)
@@ -440,6 +458,123 @@ static void sh7262_dmac_write(SH7262State *s, hwaddr addr,
     }
 }
 
+static uint32_t sh7262_vdc3_read(SH7262State *s, hwaddr addr, unsigned size)
+{
+    if (size == 1) {
+        switch (addr) {
+        default:
+            abort();
+        }
+    } else if (size == 2) {
+        switch (addr) {
+        default:
+            abort();
+        }
+    } else if (size == 4) {
+        switch (addr) {
+        case SH7262_GRCMEN2:
+            return s->vdc3.grcmen2;
+        case SH7262_GRCBUSCNT2:
+            return s->vdc3.grcbuscnt2;
+        case SH7262_GROPSADR2:
+            return s->vdc3.gropsadr2;
+        case SH7262_GROPSWH2:
+            return s->vdc3.gropswh2;
+        case SH7262_GROPSOFST2:
+            return s->vdc3.gropsofst2;
+        case SH7262_GROPDPHV2:
+            return s->vdc3.gropdphv2;
+        case SH7262_SGMODE:
+            return s->vdc3.sgmode;
+        case SH7262_SGINTCNT:
+            return s->vdc3.sgintcnt;
+        case SH7262_SYNCNT:
+            return s->vdc3.syncnt;
+        case SH7262_PANEL_CLKSEL:
+            return s->vdc3.panel_clksel;
+        case SH7262_SYN_SIZE:
+            return s->vdc3.syn_size;
+        case SH7262_PANEL_VSYNC_TIM:
+            return s->vdc3.panel_vsync_tim;
+        case SH7262_PANEL_HSYNC_TIM:
+            return s->vdc3.panel_hsync_tim;
+        case SH7262_GRA_VSYNC_TIM:
+            return s->vdc3.gra_vsync_tim;
+        default:
+            abort();
+        }
+    } else {
+        abort();
+    }
+
+    return 0;
+}
+
+static void sh7262_vdc3_write(SH7262State *s, hwaddr addr,
+                                  uint32_t mem_value, unsigned size)
+{
+    if (size == 1) {
+        switch (addr) {
+        default:
+            abort();
+        }
+    } else if (size == 2) {
+        switch (addr) {
+        default:
+            abort();
+        }
+    } else if (size == 4) {
+        switch (addr) {
+        case SH7262_GRCMEN2:
+            s->vdc3.sgmode = mem_value;
+            break;
+        case SH7262_GRCBUSCNT2:
+            s->vdc3.sgmode = mem_value;
+            break;
+        case SH7262_GROPSADR2:
+            s->vdc3.sgmode = mem_value;
+            break;
+        case SH7262_GROPSWH2:
+            s->vdc3.sgmode = mem_value;
+            break;
+        case SH7262_GROPSOFST2:
+            s->vdc3.sgmode = mem_value;
+            break;
+        case SH7262_GROPDPHV2:
+            s->vdc3.sgmode = mem_value;
+            break;
+        case SH7262_SGMODE:
+            s->vdc3.sgmode = mem_value;
+            break;
+        case SH7262_SGINTCNT:
+            s->vdc3.sgmode = mem_value;
+            break;
+        case SH7262_SYNCNT:
+            s->vdc3.sgmode = mem_value;
+            break;
+        case SH7262_PANEL_CLKSEL:
+            s->vdc3.sgmode = mem_value;
+            break;
+        case SH7262_SYN_SIZE:
+            s->vdc3.sgmode = mem_value;
+            break;
+        case SH7262_PANEL_VSYNC_TIM:
+            s->vdc3.sgmode = mem_value;
+            break;
+        case SH7262_PANEL_HSYNC_TIM:
+            s->vdc3.sgmode = mem_value;
+            break;
+        case SH7262_GRA_VSYNC_TIM:
+            s->vdc3.sgmode = mem_value;
+            break;
+        default:
+            abort();
+        }
+    } else {
+        abort();
+    }
+}
+
 uint32_t sh7262_spdr_read(SH7262State *s, unsigned ch)
 {
     uint32_t val;
@@ -592,6 +727,8 @@ static uint32_t sh7262_peripheral_read(void *opaque, hwaddr addr, unsigned size)
         return sh7262_dmac_read(s, addr, size);
     } else if (SH7262_CMT_CMSTR <= addr && addr < (SH7262_CMT_CMSTR + SH7262_CMT_SIZE)) {
         return sh7262_cmt_read(s, addr, size);
+    } else if (SH7262_VDC3_BASE <= addr && addr < (SH7262_VDC3_BASE + SH7262_VDC3_SIZE)) {
+        return sh7262_vdc3_read(s, addr, size);
     } else if (size == 1) {
         switch (addr) {
         case SH7262_FRQCR_LB:
@@ -759,6 +896,8 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
         sh7262_dmac_write(s, addr, mem_value, size);
     } else if (SH7262_CMT_CMSTR <= addr && addr < (SH7262_CMT_CMSTR + SH7262_CMT_SIZE)) {
         sh7262_cmt_write(s, addr, mem_value, size);
+    } else if (SH7262_VDC3_BASE <= addr && addr < (SH7262_VDC3_BASE + SH7262_VDC3_SIZE)) {
+        sh7262_vdc3_write(s, addr, mem_value, size);
     } else if (size == 1) {
         switch (addr) {
         case SH7262_FRQCR_LB:
