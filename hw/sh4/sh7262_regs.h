@@ -235,6 +235,20 @@
 #define SH7262_PFCR0_PF1MD_DV_DATA1 3
 #define SH7262_PFCR0_PF1MD_RxD2 4
 #define SH7262_PFCR0_PF1MD_DREQ0 5
+#define SH7262_PFIOR0 0xFFFE38B2
+#define SH7262_PFIOR0_PF12IOR(reg) ((reg >> 12) & 0x01)
+#define SH7262_PFIOR0_PF11IOR(reg) ((reg >> 11) & 0x01)
+#define SH7262_PFIOR0_PF10IOR(reg) ((reg >> 10) & 0x01)
+#define SH7262_PFIOR0_PF9IOR(reg) ((reg >> 9) & 0x01)
+#define SH7262_PFIOR0_PF8IOR(reg) ((reg >> 8) & 0x01)
+#define SH7262_PFIOR0_PF7IOR(reg) ((reg >> 7) & 0x01)
+#define SH7262_PFIOR0_PF6IOR(reg) ((reg >> 6) & 0x01)
+#define SH7262_PFIOR0_PF5IOR(reg) ((reg >> 5) & 0x01)
+#define SH7262_PFIOR0_PF4IOR(reg) ((reg >> 4) & 0x01)
+#define SH7262_PFIOR0_PF3IOR(reg) ((reg >> 3) & 0x01)
+#define SH7262_PFIOR0_PF2IOR(reg) ((reg >> 2) & 0x01)
+#define SH7262_PFIOR0_PF1IOR(reg) ((reg >> 1) & 0x01)
+#define SH7262_PFIOR0_PF0IOR(reg) ((reg >> 0) & 0x01)
 #define SH7262_PGCR5 0xFFFE38C4
 #define SH7262_PGCR5_PG20MD(reg) ((reg >> 0) & 0x07)
 #define SH7262_PGCR5_PG20MD_PG20 0
