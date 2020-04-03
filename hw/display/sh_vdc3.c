@@ -1,7 +1,4 @@
-#include "qemu/osdep.h"
-#include "hw/hw.h"
-#include "hw/sh4/sh.h"
-#include "qapi/error.h"
+#include "hw/display/sh_vdc3.h"
 
 #define VDC3_SIZE 0x1928
 #define GRCMEN2_OFS 0x1000
@@ -18,25 +15,6 @@
 #define PANEL_VSYNC_TIM_OFS 0x1904
 #define PANEL_HSYNC_TIM_OFS 0x1908
 #define GRA_VSYNC_TIM_OFS 0x1910
-
-typedef struct {
-    MemoryRegion iomem;
-    MemoryRegion iomem_fffc;
-    uint32_t grcmen2;
-    uint32_t grcbuscnt2;
-    uint32_t gropsadr2;
-    uint32_t gropswh2;
-    uint32_t gropsofst2;
-    uint32_t gropdphv2;
-    uint32_t sgmode;
-    uint32_t sgintcnt;
-    uint32_t syncnt;
-    uint32_t panel_clksel;
-    uint32_t syn_size;
-    uint32_t panel_vsync_tim;
-    uint32_t panel_hsync_tim;
-    uint32_t gra_vsync_tim;
-} sh_vdc3_state;
 
 static uint64_t sh_vdc3_read(void *opaque, hwaddr offs,
                              unsigned size)
@@ -166,17 +144,55 @@ static const MemoryRegionOps sh_vdc3_ops = {
     .endianness = DEVICE_NATIVE_ENDIAN,
 };
 
-void sh_vdc3_init(MemoryRegion *sysmem,
-                  hwaddr base)
+static void sh_vdc3_init(Object *obj)
 {
-    sh_vdc3_state *s;
-
-    s = g_malloc0(sizeof(sh_vdc3_state));
+    sh_vdc3_state *s = SH_VDC3(obj);
 
     memory_region_init_io(&s->iomem, NULL, &sh_vdc3_ops, s,
                           "vdc3", 0x100000000ULL);
 
     memory_region_init_alias(&s->iomem_fffc, NULL, "vdc3-fffc", &s->iomem,
                              0, VDC3_SIZE);
-    memory_region_add_subregion(sysmem, base, &s->iomem_fffc);
 }
+
+static void sh_vdc3_realize(DeviceState *dev, Error **errp)
+{
+    sh_vdc3_state *s = SH_VDC3(dev);
+    Error *err = NULL;
+    Object *obj;
+
+    obj = object_property_get_link(OBJECT(dev), "sysmem", &err);
+    if (obj == NULL) {
+        abort();
+    }
+    s->sysmem = MEMORY_REGION(obj);
+    memory_region_add_subregion(s->sysmem, s->base, &s->iomem_fffc);
+}
+
+static Property sh_vdc3_props[] = {
+    DEFINE_PROP_UINT32("base", sh_vdc3_state, base, 0),
+    DEFINE_PROP_END_OF_LIST()
+};
+
+static void sh_vdc3_class_init(Object *klass, void *data)
+{
+    DeviceClass *dc = DEVICE_CLASS(klass);
+
+    dc->props = sh_vdc3_props;
+    dc->realize = sh_vdc3_realize;
+}
+
+static TypeInfo sh_vdc3_info = {
+    .name = TYPE_SH_VDC3,
+    .parent = TYPE_DEVICE,
+    .instance_size = sizeof(sh_vdc3_state),
+    .class_init = sh_vdc3_class_init,
+    .instance_init = sh_vdc3_init,
+};
+
+static void sh_vdc3_register_types(void)
+{
+    type_register_static(&sh_vdc3_info);
+}
+
+type_init(sh_vdc3_register_types)

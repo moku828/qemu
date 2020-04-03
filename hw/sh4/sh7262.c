@@ -34,6 +34,7 @@
 #include "hw/sh4/sh_intc.h"
 #include "chardev/char-fe.h"
 #include "hw/ptimer.h"
+#include "hw/display/sh_vdc3.h"
 
 typedef struct {
   uint32_t sprx[8];
@@ -163,6 +164,7 @@ typedef struct SH7262State {
     qemu_irq cs_lines[2];
     SH7262_DMAC dmac;
     SH7262_CMT cmt;
+    sh_vdc3_state vdc3;
 } SH7262State;
 
 static uint32_t sh7262_cmt_per_channel_read(SH7262State *s, unsigned ch, unsigned ofs, unsigned size)
@@ -1109,6 +1111,7 @@ SH7262State *sh7262_init(SuperHCPU *cpu, MemoryRegion *sysmem)
 {
     SH7262State *s;
     int ret;
+    Error *err = NULL;
 
     s = g_malloc0(sizeof(SH7262State));
     s->cpu = cpu;
@@ -1208,7 +1211,13 @@ SH7262State *sh7262_init(SuperHCPU *cpu, MemoryRegion *sysmem)
                    s->intc.irqs[SCIF3_BRI]);
 
     // Video Display Controller 3
-    sh_vdc3_init(sysmem, SH7262_VDC3_BASE);
+    object_initialize(&s->vdc3, sizeof(s->vdc3), TYPE_SH_VDC3);
+    object_property_add_const_link(OBJECT(&s->vdc3), "sysmem", OBJECT(sysmem), &err);
+    if (err) { abort(); }
+    object_property_set_uint(OBJECT(&s->vdc3), SH7262_VDC3_BASE, "base", &err);
+    if (err) { abort(); }
+    object_property_set_bool(OBJECT(&s->vdc3), true, "realized", &err);
+    if (err) { abort(); }
 
     return s;
 }

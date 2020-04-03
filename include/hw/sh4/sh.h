@@ -66,8 +66,6 @@ void sh_serial_init(MemoryRegion *sysmem,
 		     qemu_irq bri_source);
 
 /* sh_vdc3.c */
-void sh_vdc3_init(MemoryRegion *sysmem,
-                  hwaddr base);
 
 /* sh7750.c */
 qemu_irq sh7750_irl(struct SH7750State *s);
