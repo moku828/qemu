@@ -1,6 +1,7 @@
 #include "qemu/osdep.h"
 #include "hw/hw.h"
 #include "hw/qdev.h"
+#include "ui/console.h"
 #include "hw/sh4/sh.h"
 #include "qapi/error.h"
 
@@ -10,6 +11,8 @@ typedef struct {
     MemoryRegion iomem;
     MemoryRegion iomem_fffc;
     uint32_t base;
+    QemuConsole *con;
+    bool invalidate;
     uint32_t grcmen2;
     uint32_t grcbuscnt2;
     uint32_t gropsadr2;

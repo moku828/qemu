@@ -144,6 +144,25 @@ static const MemoryRegionOps sh_vdc3_ops = {
     .endianness = DEVICE_NATIVE_ENDIAN,
 };
 
+static void sh_vdc3_invalidate_display(void *opaque)
+{
+    sh_vdc3_state *s = SH_VDC3(opaque);
+
+    s->invalidate = true;
+}
+
+static void sh_vdc3_update_display(void *opaque)
+{
+    sh_vdc3_state *s = SH_VDC3(opaque);
+
+    s->invalidate = false;
+}
+
+static const GraphicHwOps sh_vdc3_gfx_ops = {
+    .invalidate = sh_vdc3_invalidate_display,
+    .gfx_update = sh_vdc3_update_display,
+};
+
 static void sh_vdc3_init(Object *obj)
 {
     sh_vdc3_state *s = SH_VDC3(obj);
@@ -167,6 +186,8 @@ static void sh_vdc3_realize(DeviceState *dev, Error **errp)
     }
     s->sysmem = MEMORY_REGION(obj);
     memory_region_add_subregion(s->sysmem, s->base, &s->iomem_fffc);
+
+    s->con = graphic_console_init(dev, 0, &sh_vdc3_gfx_ops, s);
 }
 
 static Property sh_vdc3_props[] = {
