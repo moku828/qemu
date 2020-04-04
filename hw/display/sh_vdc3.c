@@ -1,4 +1,5 @@
 #include "hw/display/sh_vdc3.h"
+#include "hw/display/framebuffer.h"
 
 #define VDC3_SIZE 0x1928
 #define GRCMEN2_OFS 0x1000
@@ -165,6 +166,10 @@ static void sh_vdc3_update_display(void *opaque)
 {
     sh_vdc3_state *s = SH_VDC3(opaque);
 
+    if (s->invalidate) {
+        framebuffer_update_memory_section(&s->fbsection, s->vram, s->gropsadr2 - s->vram_base, s->h, s->w);
+    }
+
     s->invalidate = false;
 }
 
@@ -197,11 +202,18 @@ static void sh_vdc3_realize(DeviceState *dev, Error **errp)
     s->sysmem = MEMORY_REGION(obj);
     memory_region_add_subregion(s->sysmem, s->base, &s->iomem_fffc);
 
+    obj = object_property_get_link(OBJECT(dev), "vram", &err);
+    if (obj == NULL) {
+        abort();
+    }
+    s->vram = MEMORY_REGION(obj);
+
     s->con = graphic_console_init(dev, 0, &sh_vdc3_gfx_ops, s);
 }
 
 static Property sh_vdc3_props[] = {
     DEFINE_PROP_UINT32("base", sh_vdc3_state, base, 0),
+    DEFINE_PROP_UINT32("vram_base", sh_vdc3_state, vram_base, 0),
     DEFINE_PROP_END_OF_LIST()
 };
 

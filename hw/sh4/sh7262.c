@@ -1214,7 +1214,11 @@ SH7262State *sh7262_init(SuperHCPU *cpu, MemoryRegion *sysmem)
     object_initialize(&s->vdc3, sizeof(s->vdc3), TYPE_SH_VDC3);
     object_property_add_const_link(OBJECT(&s->vdc3), "sysmem", OBJECT(sysmem), &err);
     if (err) { abort(); }
+    object_property_add_const_link(OBJECT(&s->vdc3), "vram", OBJECT(&s->largeram_1c), &err);
+    if (err) { abort(); }
     object_property_set_uint(OBJECT(&s->vdc3), SH7262_VDC3_BASE, "base", &err);
+    if (err) { abort(); }
+    object_property_set_uint(OBJECT(&s->vdc3), 0x1C000000, "vram_base", &err);
     if (err) { abort(); }
     object_property_set_bool(OBJECT(&s->vdc3), true, "realized", &err);
     if (err) { abort(); }
