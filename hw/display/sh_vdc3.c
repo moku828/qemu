@@ -15,6 +15,10 @@
 #define PANEL_VSYNC_TIM_OFS 0x1904
 #define PANEL_HSYNC_TIM_OFS 0x1908
 #define GRA_VSYNC_TIM_OFS 0x1910
+#define GRCMEN_WE(reg) ((reg >> 31) & 0x01)
+#define GRCMEN_WE_PROHIBIT 0
+#define GRCMEN_WE_PERMIT 1
+#define GRCMEN_WE_MASK 0x80000000U
 
 static uint64_t sh_vdc3_read(void *opaque, hwaddr offs,
                              unsigned size)
@@ -90,6 +94,10 @@ static void sh_vdc3_write(void *opaque, hwaddr offs,
         switch (offs) {
         case GRCMEN2_OFS:
             s->grcmen2 = val;
+            if (GRCMEN_WE(s->grcmen2) == GRCMEN_WE_PERMIT) {
+                qemu_console_resize(s->con, (s->gropswh2 >> 0) & 0x03FF, (s->gropswh2 >> 16) & 0x03FF);
+                s->grcmen2 &= ~GRCMEN_WE_MASK;
+            }
             break;
         case GRCBUSCNT2_OFS:
             s->grcbuscnt2 = val;
