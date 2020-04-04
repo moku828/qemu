@@ -95,7 +95,9 @@ static void sh_vdc3_write(void *opaque, hwaddr offs,
         case GRCMEN2_OFS:
             s->grcmen2 = val;
             if (GRCMEN_WE(s->grcmen2) == GRCMEN_WE_PERMIT) {
-                qemu_console_resize(s->con, (s->gropswh2 >> 0) & 0x03FF, (s->gropswh2 >> 16) & 0x03FF);
+                s->w = (s->gropswh2 >> 0) & 0x03FF;
+                s->h = (s->gropswh2 >> 16) & 0x03FF;
+                qemu_console_resize(s->con, s->w, s->h);
                 s->grcmen2 &= ~GRCMEN_WE_MASK;
             }
             break;

@@ -10,6 +10,8 @@ typedef struct {
     MemoryRegion *sysmem;
     MemoryRegion iomem;
     MemoryRegion iomem_fffc;
+    uint16_t w;
+    uint16_t h;
     uint32_t base;
     QemuConsole *con;
     bool invalidate;
