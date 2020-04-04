@@ -1,5 +1,6 @@
 #include "hw/display/sh_vdc3.h"
 #include "hw/display/framebuffer.h"
+#include "ui/pixel_ops.h"
 
 #define VDC3_SIZE 0x1928
 #define GRCMEN2_OFS 0x1000
@@ -155,6 +156,33 @@ static const MemoryRegionOps sh_vdc3_ops = {
     .endianness = DEVICE_NATIVE_ENDIAN,
 };
 
+static void sh_vdc3_draw_line(void *opaque, uint8_t *dst, uint8_t *src, int width, int deststep)
+{
+    sh_vdc3_state *s = SH_VDC3(opaque);
+    DisplaySurface *surface = qemu_console_surface(s->con);
+    uint16_t rgb565;
+    uint8_t r8, g8, b8;
+
+    while (width--) {
+        rgb565 = ldl_be_p(src);
+        r8 = ((rgb565 >> 11) & 0x1F) << 3;
+        g8 = ((rgb565 >>  5) & 0x3F) << 2;
+        b8 = ((rgb565 >>  0) & 0x1F) << 3;
+        src += 2;
+
+        switch (surface_bits_per_pixel(surface))
+        {
+        case 32:
+            *(uint32_t *)dst = rgb_to_pixel32(r8, g8, b8);
+            dst += 4;
+            break;
+        
+        default:
+            break;
+        }
+    }    
+}
+
 static void sh_vdc3_invalidate_display(void *opaque)
 {
     sh_vdc3_state *s = SH_VDC3(opaque);
@@ -165,10 +193,17 @@ static void sh_vdc3_invalidate_display(void *opaque)
 static void sh_vdc3_update_display(void *opaque)
 {
     sh_vdc3_state *s = SH_VDC3(opaque);
+    DisplaySurface *surface = qemu_console_surface(s->con);
+    int first = 0;
+    int last = 0;
 
     if (s->invalidate) {
         framebuffer_update_memory_section(&s->fbsection, s->vram, s->gropsadr2 - s->vram_base, s->h, s->w);
     }
+
+    framebuffer_update_display(surface, &s->fbsection, s->w, s->h,
+                               s->w * 2, s->w * surface_bytes_per_pixel(surface), 0,
+                               s->invalidate, sh_vdc3_draw_line, s, &first, &last);
 
     s->invalidate = false;
 }
