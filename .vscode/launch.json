@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug with qemu within Docker",
+            "name": "Debug",
             "type": "cppdbg",
             "request": "launch",
             "program": "/build/qemu/build/sh4eb-softmmu/qemu-system-sh4eb",
