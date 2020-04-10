@@ -9,6 +9,10 @@
             "command": "docker run --rm -it -v${workspaceFolder}:/build/qemu sh-tools/qemu_buildenv ../configure --disable-bsd-user --disable-guest-agent --disable-strip --disable-werror --disable-gcrypt --enable-debug-info --disable-debug-tcg --disable-docs --disable-tcg-interpreter --enable-attr --disable-brlapi --disable-linux-aio --disable-bzip2 --disable-bluez --disable-cap-ng --disable-curl --disable-fdt --disable-glusterfs --disable-gnutls --disable-nettle --disable-gtk --disable-rdma --disable-libiscsi --disable-vnc-jpeg --disable-kvm --disable-lzo --disable-curses --disable-libnfs --disable-numa --disable-opengl --disable-vnc-png --disable-rbd --disable-vnc-sasl --disable-sdl --disable-seccomp --disable-smartcard --disable-snappy --disable-spice --disable-libssh2 --disable-libusb --disable-usb-redir --disable-vde --disable-vhost-net --disable-virglrenderer --disable-virtfs --enable-vnc --disable-vte --disable-xen --disable-xen-pci-passthrough --disable-xfsctl --disable-linux-user --enable-system --disable-blobs --disable-tools --target-list=sh4eb-softmmu --static --disable-pie --enable-trace-backend=simple"
         },
         {
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
             "label": "make",
             "type": "shell",
             "command": "docker run --rm -it -v${workspaceFolder}:/build/qemu sh-tools/qemu_buildenv make -j8"
@@ -17,12 +21,6 @@
             "label": "make clean",
             "type": "shell",
             "command": "docker run --rm -it -v${workspaceFolder}:/build/qemu sh-tools/qemu_buildenv make clean"
-        },
-        {
-            "label": "copy sd.img to qemu from asp",
-            "type": "shell",
-            "command": "copy",
-            "args": ["${workspaceFolder:asp}\\sd.img", "${workspaceFolder}"]
         },
         {
             "label": "debug",
