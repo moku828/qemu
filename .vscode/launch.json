@@ -20,6 +20,7 @@
                 "-s",
                 "-S",
                 "-trace", "events=/build/qemu/trace.events",
+                "2>&1"
             ],
             "stopAtEntry": true,
             "cwd": "/build/qemu",
