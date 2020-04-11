@@ -233,28 +233,19 @@ static uint32_t sh7262_cmt_cmstr_read(SH7262State *s, hwaddr addr, unsigned size
     return GET_REG_WORD(s->cmt.cmstr, addr, size);
 }
 
-static void sh7262_cmt_0_tick(void *opaque)
+static void sh7262_cmt_tick(void *opaque)
 {
-    SH7262State* s = (SH7262State*)opaque;
-    s->cmt.pc[0].cmcsr |= 0x0080;
-    if (SH7262_CMCSR_CMIE(s->cmt.pc[0].cmcsr) == SH7262_CMCSR_CMIE_PERMIT) {
-        qemu_set_irq(s->cmt.pc[0].cmi, 1);
-    }
-}
-
-static void sh7262_cmt_1_tick(void *opaque)
-{
-    SH7262State* s = (SH7262State*)opaque;
-    s->cmt.pc[1].cmcsr |= 0x0080;
-    if (SH7262_CMCSR_CMIE(s->cmt.pc[1].cmcsr) == SH7262_CMCSR_CMIE_PERMIT) {
-        qemu_set_irq(s->cmt.pc[1].cmi, 1);
+    SH7262_CMT_PER_CHANNEL* pc = (SH7262_CMT_PER_CHANNEL*)opaque;
+    pc->cmcsr |= 0x0080;
+    if (SH7262_CMCSR_CMIE(pc->cmcsr) == SH7262_CMCSR_CMIE_PERMIT) {
+        qemu_set_irq(pc->cmi, 1);
     }
 }
 
 static void sh7262_cmt_init(SH7262State *s, unsigned ch, qemu_irq cmi)
 {
     QEMUBH* bh;
-    bh = qemu_bh_new(ch == 0 ? sh7262_cmt_0_tick : sh7262_cmt_1_tick, s);
+    bh = qemu_bh_new(sh7262_cmt_tick, &s->cmt.pc[ch]);
     s->cmt.pc[ch].pts = ptimer_init(bh, PTIMER_POLICY_DEFAULT);
     s->cmt.pc[ch].cmi = cmi;
 }
