@@ -273,7 +273,7 @@ void superh_cpu_do_interrupt(CPUState *cs)
                 }
             }
             env->pc = cpu_ldl_code(env, env->vbr + irq_vector * 4);
-            cpu_reset_interrupt(cs, CPU_INTERRUPT_HARD);
+            env->sr |= 0xf << 4;
         }
         return;
     }
