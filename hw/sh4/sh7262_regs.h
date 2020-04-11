@@ -251,6 +251,7 @@
 #define SH7262_PFIOR0_PF2IOR(reg) ((reg >> 2) & 0x01)
 #define SH7262_PFIOR0_PF1IOR(reg) ((reg >> 1) & 0x01)
 #define SH7262_PFIOR0_PF0IOR(reg) ((reg >> 0) & 0x01)
+#define SH7262_PFDR0 0xFFFE38B6
 #define SH7262_PGCR7 0xFFFE38C0
 #define SH7262_PGCR7_PG0MD(reg) ((reg >> 0) & 0x07)
 #define SH7262_PGCR7_PG0MD_PG0 0
