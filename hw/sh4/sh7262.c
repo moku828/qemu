@@ -1036,6 +1036,9 @@ typedef struct {
     qemu_irq irq5;
     qemu_irq irq6;
     qemu_irq irq7;
+
+    char buf[8];
+    int len;
 } sh7262_irq_state;
 
 static int sh7262_irq_can_receive1(void *opaque)
@@ -1047,23 +1050,43 @@ static void sh7262_irq_receive1(void *opaque, const uint8_t *buf, int size)
 {
     sh7262_irq_state *s = opaque;
 
-    if (size>4)
+    for (int i = 0; i < size; i++)
     {
-        if (memcmp(buf,"irq0",4)==0) {
+        switch (buf[i])
+        {
+        case '\r':
+        case '\n':
+        case '\0':
+            s->len = 0;
+            break;
+        
+        default:
+            if (s->len < 8)
+            {
+                s->buf[s->len] = buf[i];
+                s->len++;
+            }
+            break;
+        }
+    }
+
+    if (strlen(s->buf)>=4)
+    {
+        if (memcmp(s->buf,"irq0",4)==0) {
             qemu_set_irq(s->irq0, 1);
-        } else if (memcmp(buf,"irq1",4)==0) {
+        } else if (memcmp(s->buf,"irq1",4)==0) {
             qemu_set_irq(s->irq1, 1);
-        } else if (memcmp(buf,"irq2",4)==0) {
+        } else if (memcmp(s->buf,"irq2",4)==0) {
             qemu_set_irq(s->irq2, 1);
-        } else if (memcmp(buf,"irq3",4)==0) {
+        } else if (memcmp(s->buf,"irq3",4)==0) {
             qemu_set_irq(s->irq3, 1);
-        } else if (memcmp(buf,"irq4",4)==0) {
+        } else if (memcmp(s->buf,"irq4",4)==0) {
             qemu_set_irq(s->irq4, 1);
-        } else if (memcmp(buf,"irq5",4)==0) {
+        } else if (memcmp(s->buf,"irq5",4)==0) {
             qemu_set_irq(s->irq5, 1);
-        } else if (memcmp(buf,"irq6",4)==0) {
+        } else if (memcmp(s->buf,"irq6",4)==0) {
             qemu_set_irq(s->irq6, 1);
-        } else if (memcmp(buf,"irq7",4)==0) {
+        } else if (memcmp(s->buf,"irq7",4)==0) {
             qemu_set_irq(s->irq7, 1);
         }
     }
