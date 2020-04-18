@@ -167,6 +167,140 @@ typedef struct SH7262State {
     sh_vdc3_state vdc3;
 } SH7262State;
 
+enum {
+	UNUSED = 0,
+
+	/* interrupt sources */
+	IRQ0, IRQ1, IRQ2, IRQ3,
+	IRQ4, IRQ5, IRQ6, IRQ7,
+    CMI0, CMI1,
+    SCIF2_BRI, SCIF2_ERI, SCIF2_RXI, SCIF2_TXI, 
+    SCIF3_BRI, SCIF3_ERI, SCIF3_RXI, SCIF3_TXI, 
+
+	/* interrupt groups */
+
+	NR_SOURCES,
+};
+
+static struct intc_vect vectors[] = {
+	INTC_VECT(IRQ0, 64), INTC_VECT(IRQ1, 65),
+	INTC_VECT(IRQ2, 66), INTC_VECT(IRQ3, 67),
+	INTC_VECT(IRQ4, 68), INTC_VECT(IRQ5, 69),
+	INTC_VECT(IRQ6, 70), INTC_VECT(IRQ7, 71),
+	INTC_VECT(CMI0, 175), INTC_VECT(CMI1, 176),
+	INTC_VECT(SCIF2_BRI, 240), INTC_VECT(SCIF2_ERI, 241),
+	INTC_VECT(SCIF2_RXI, 242), INTC_VECT(SCIF2_TXI, 243),
+	INTC_VECT(SCIF3_BRI, 244), INTC_VECT(SCIF3_ERI, 245),
+	INTC_VECT(SCIF3_RXI, 246), INTC_VECT(SCIF3_TXI, 247),
+};
+
+static struct intc_group groups[] = {
+};
+
+static struct intc_prio_reg prio_registers[] = {
+};
+
+static struct intc_mask_reg mask_registers[] = {
+};
+
+typedef struct {
+    CharBackend chr;
+
+    qemu_irq irq0;
+    qemu_irq irq1;
+    qemu_irq irq2;
+    qemu_irq irq3;
+    qemu_irq irq4;
+    qemu_irq irq5;
+    qemu_irq irq6;
+    qemu_irq irq7;
+
+    char buf[8];
+    int len;
+} sh7262_irq_state;
+
+static int sh7262_irq_can_receive1(void *opaque)
+{
+    return 8;
+}
+
+static void sh7262_irq_receive1(void *opaque, const uint8_t *buf, int size)
+{
+    sh7262_irq_state *s = opaque;
+
+    for (int i = 0; i < size; i++)
+    {
+        switch (buf[i])
+        {
+        case '\r':
+        case '\n':
+        case '\0':
+            s->len = 0;
+            break;
+        
+        default:
+            if (s->len < 8)
+            {
+                s->buf[s->len] = buf[i];
+                s->len++;
+            }
+            break;
+        }
+    }
+
+    if (strlen(s->buf)>=4)
+    {
+        if (memcmp(s->buf,"irq0",4)==0) {
+            qemu_set_irq(s->irq0, 1);
+        } else if (memcmp(s->buf,"irq1",4)==0) {
+            qemu_set_irq(s->irq1, 1);
+        } else if (memcmp(s->buf,"irq2",4)==0) {
+            qemu_set_irq(s->irq2, 1);
+        } else if (memcmp(s->buf,"irq3",4)==0) {
+            qemu_set_irq(s->irq3, 1);
+        } else if (memcmp(s->buf,"irq4",4)==0) {
+            qemu_set_irq(s->irq4, 1);
+        } else if (memcmp(s->buf,"irq5",4)==0) {
+            qemu_set_irq(s->irq5, 1);
+        } else if (memcmp(s->buf,"irq6",4)==0) {
+            qemu_set_irq(s->irq6, 1);
+        } else if (memcmp(s->buf,"irq7",4)==0) {
+            qemu_set_irq(s->irq7, 1);
+        }
+    }
+}
+
+void sh7262_irq_init(Chardev *chr,
+                    qemu_irq irq0_source,
+                    qemu_irq irq1_source,
+                    qemu_irq irq2_source,
+                    qemu_irq irq3_source,
+                    qemu_irq irq4_source,
+                    qemu_irq irq5_source,
+                    qemu_irq irq6_source,
+                    qemu_irq irq7_source)
+{
+    sh7262_irq_state *s;
+
+    s = g_malloc0(sizeof(sh7262_irq_state));
+
+    if (chr) {
+        qemu_chr_fe_init(&s->chr, chr, &error_abort);
+        qemu_chr_fe_set_handlers(&s->chr, sh7262_irq_can_receive1,
+                                 sh7262_irq_receive1,
+                                 NULL, NULL, s, NULL, true);
+    }
+
+    s->irq0 = irq0_source;
+    s->irq1 = irq1_source;
+    s->irq2 = irq2_source;
+    s->irq3 = irq3_source;
+    s->irq4 = irq4_source;
+    s->irq5 = irq5_source;
+    s->irq6 = irq6_source;
+    s->irq7 = irq7_source;
+}
+
 static uint32_t sh7262_cmt_per_channel_read(SH7262State *s, unsigned ch, unsigned ofs, unsigned size)
 {
     if (size == 1) {
@@ -989,140 +1123,6 @@ static const MemoryRegionOps sh7262_peripheral_ops = {
     .write = sh7262_peripheral_write,
     .endianness = DEVICE_NATIVE_ENDIAN,
 };
-
-enum {
-	UNUSED = 0,
-
-	/* interrupt sources */
-	IRQ0, IRQ1, IRQ2, IRQ3,
-	IRQ4, IRQ5, IRQ6, IRQ7,
-    CMI0, CMI1,
-    SCIF2_BRI, SCIF2_ERI, SCIF2_RXI, SCIF2_TXI, 
-    SCIF3_BRI, SCIF3_ERI, SCIF3_RXI, SCIF3_TXI, 
-
-	/* interrupt groups */
-
-	NR_SOURCES,
-};
-
-static struct intc_vect vectors[] = {
-	INTC_VECT(IRQ0, 64), INTC_VECT(IRQ1, 65),
-	INTC_VECT(IRQ2, 66), INTC_VECT(IRQ3, 67),
-	INTC_VECT(IRQ4, 68), INTC_VECT(IRQ5, 69),
-	INTC_VECT(IRQ6, 70), INTC_VECT(IRQ7, 71),
-	INTC_VECT(CMI0, 175), INTC_VECT(CMI1, 176),
-	INTC_VECT(SCIF2_BRI, 240), INTC_VECT(SCIF2_ERI, 241),
-	INTC_VECT(SCIF2_RXI, 242), INTC_VECT(SCIF2_TXI, 243),
-	INTC_VECT(SCIF3_BRI, 244), INTC_VECT(SCIF3_ERI, 245),
-	INTC_VECT(SCIF3_RXI, 246), INTC_VECT(SCIF3_TXI, 247),
-};
-
-static struct intc_group groups[] = {
-};
-
-static struct intc_prio_reg prio_registers[] = {
-};
-
-static struct intc_mask_reg mask_registers[] = {
-};
-
-typedef struct {
-    CharBackend chr;
-
-    qemu_irq irq0;
-    qemu_irq irq1;
-    qemu_irq irq2;
-    qemu_irq irq3;
-    qemu_irq irq4;
-    qemu_irq irq5;
-    qemu_irq irq6;
-    qemu_irq irq7;
-
-    char buf[8];
-    int len;
-} sh7262_irq_state;
-
-static int sh7262_irq_can_receive1(void *opaque)
-{
-    return 8;
-}
-
-static void sh7262_irq_receive1(void *opaque, const uint8_t *buf, int size)
-{
-    sh7262_irq_state *s = opaque;
-
-    for (int i = 0; i < size; i++)
-    {
-        switch (buf[i])
-        {
-        case '\r':
-        case '\n':
-        case '\0':
-            s->len = 0;
-            break;
-        
-        default:
-            if (s->len < 8)
-            {
-                s->buf[s->len] = buf[i];
-                s->len++;
-            }
-            break;
-        }
-    }
-
-    if (strlen(s->buf)>=4)
-    {
-        if (memcmp(s->buf,"irq0",4)==0) {
-            qemu_set_irq(s->irq0, 1);
-        } else if (memcmp(s->buf,"irq1",4)==0) {
-            qemu_set_irq(s->irq1, 1);
-        } else if (memcmp(s->buf,"irq2",4)==0) {
-            qemu_set_irq(s->irq2, 1);
-        } else if (memcmp(s->buf,"irq3",4)==0) {
-            qemu_set_irq(s->irq3, 1);
-        } else if (memcmp(s->buf,"irq4",4)==0) {
-            qemu_set_irq(s->irq4, 1);
-        } else if (memcmp(s->buf,"irq5",4)==0) {
-            qemu_set_irq(s->irq5, 1);
-        } else if (memcmp(s->buf,"irq6",4)==0) {
-            qemu_set_irq(s->irq6, 1);
-        } else if (memcmp(s->buf,"irq7",4)==0) {
-            qemu_set_irq(s->irq7, 1);
-        }
-    }
-}
-
-void sh7262_irq_init(Chardev *chr,
-                    qemu_irq irq0_source,
-                    qemu_irq irq1_source,
-                    qemu_irq irq2_source,
-                    qemu_irq irq3_source,
-                    qemu_irq irq4_source,
-                    qemu_irq irq5_source,
-                    qemu_irq irq6_source,
-                    qemu_irq irq7_source)
-{
-    sh7262_irq_state *s;
-
-    s = g_malloc0(sizeof(sh7262_irq_state));
-
-    if (chr) {
-        qemu_chr_fe_init(&s->chr, chr, &error_abort);
-        qemu_chr_fe_set_handlers(&s->chr, sh7262_irq_can_receive1,
-                                 sh7262_irq_receive1,
-                                 NULL, NULL, s, NULL, true);
-    }
-
-    s->irq0 = irq0_source;
-    s->irq1 = irq1_source;
-    s->irq2 = irq2_source;
-    s->irq3 = irq3_source;
-    s->irq4 = irq4_source;
-    s->irq5 = irq5_source;
-    s->irq6 = irq6_source;
-    s->irq7 = irq7_source;
-}
 
 SH7262State *sh7262_init(SuperHCPU *cpu, MemoryRegion *sysmem)
 {
