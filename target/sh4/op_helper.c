@@ -528,20 +528,23 @@ uint32_t helper_divu(CPUSH4State *env, uint32_t t0, uint32_t t1)
 void helper_resbank(CPUSH4State *env)
 {
     int i;
+    int bn;
 
     if (env->sr_bo == 0) {
-        if (env->bn > 0) {
-            env->bn--;
+        bn = env->ibnr & 0x000F;
+        if (bn > 0) {
+            bn--;
+            env->ibnr = (env->ibnr & ~0x000F) | bn;
         } else {
             // TODO bank underflow
             abort();
         }
-        env->pr = env->regbank[env->bn][18];
-        env->gbr = env->regbank[env->bn][17];
-        env->macl = env->regbank[env->bn][16];
-        env->mach = env->regbank[env->bn][15];
+        env->pr = env->regbank[bn][18];
+        env->gbr = env->regbank[bn][17];
+        env->macl = env->regbank[bn][16];
+        env->mach = env->regbank[bn][15];
         for (i = 14; i >= 0; i--) {
-            env->gregs[i] = env->regbank[env->bn][i];
+            env->gregs[i] = env->regbank[bn][i];
         }
     } else {
         for (i = 0; i <= 14; i++) {

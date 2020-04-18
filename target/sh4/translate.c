@@ -68,6 +68,7 @@ static TCGv cpu_vbr, cpu_tbr, cpu_sgr, cpu_dbr, cpu_mach, cpu_macl;
 static TCGv cpu_pr, cpu_fpscr, cpu_fpul;
 static TCGv cpu_lock_addr, cpu_lock_value;
 static TCGv cpu_fregs[32];
+static TCGv cpu_ibnr, cpu_ibcr;
 
 /* internal register indexes */
 static TCGv cpu_flags, cpu_delayed_pc, cpu_delayed_cond;
@@ -161,6 +162,12 @@ void sh4_translate_init(void)
         cpu_fregs[i] = tcg_global_mem_new_i32(cpu_env,
                                               offsetof(CPUSH4State, fregs[i]),
                                               fregnames[i]);
+
+    cpu_ibnr = tcg_global_mem_new_i32(cpu_env,
+                                      offsetof(CPUSH4State, ibnr), "IBNR");
+
+    cpu_ibcr = tcg_global_mem_new_i32(cpu_env,
+                                      offsetof(CPUSH4State, ibcr), "IBCR");
 }
 
 void superh_cpu_dump_state(CPUState *cs, FILE *f,

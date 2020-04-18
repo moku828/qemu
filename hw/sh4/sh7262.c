@@ -911,6 +911,7 @@ static void sh7262_peripheral_write(void *opaque, hwaddr addr,
             break;
         case SH7262_IBNR:
             s->ibnr = mem_value;
+            s->cpu->env.ibnr = s->ibnr;
             break;
         case SH7262_PCIOR0:
             s->pcior0 = mem_value;

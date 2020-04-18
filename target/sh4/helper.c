@@ -230,9 +230,7 @@ void superh_cpu_do_interrupt(CPUState *cs)
         env->intevt = irq_vector;
         env->pc = env->vbr + 0x600;
         if (env->features == SH_FEATURE_SH2A) {
-            uint16_t ibnr = cpu_lduw_data(env, 0xFFFE080E);
-            uint16_t ibcr = cpu_lduw_data(env, 0xFFFE080C);
-            uint8_t be = (ibnr >> 14) & 0x03;
+            uint8_t be = (env->ibnr >> 14) & 0x03;
             bool bankenable = false;
             switch (be)
             {
@@ -240,22 +238,25 @@ void superh_cpu_do_interrupt(CPUState *cs)
                 bankenable = true;
                 break;
             case 3:
-                if (ibcr != 0x0000) bankenable = true;
+                if (env->ibcr != 0x0000) bankenable = true;
                 break;
             }
             if (bankenable)
             {
                 int i;
-                if (env->bn < env->bn_max) {
+                int bn;
+                bn = env->ibnr & 0x000F;
+                if (bn < env->bn_max) {
                     for (i = 0; i <= 14; i++) {
-                        env->regbank[env->bn][i] = env->gregs[i];
+                        env->regbank[bn][i] = env->gregs[i];
                     }
-                    env->regbank[env->bn][15] = env->mach;
-                    env->regbank[env->bn][16] = env->macl;
-                    env->regbank[env->bn][17] = env->gbr;
-                    env->regbank[env->bn][18] = env->pr;
-                    env->regbank[env->bn][19] = irq_vector;
-                    env->bn++;
+                    env->regbank[bn][15] = env->mach;
+                    env->regbank[bn][16] = env->macl;
+                    env->regbank[bn][17] = env->gbr;
+                    env->regbank[bn][18] = env->pr;
+                    env->regbank[bn][19] = irq_vector;
+                    bn++;
+                    env->ibnr = (env->ibnr & ~0x000F) | bn;
                 } else {
                     env->gregs[15] -= 4;
                     cpu_stl_data(env, env->gregs[15], env->pr);
