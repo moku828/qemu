@@ -251,10 +251,10 @@ void superh_cpu_do_interrupt(CPUState *cs)
                         env->regbank[bn][i] = env->gregs[i];
                     }
                     env->regbank[bn][15] = env->mach;
-                    env->regbank[bn][16] = env->macl;
-                    env->regbank[bn][17] = env->gbr;
-                    env->regbank[bn][18] = env->pr;
-                    env->regbank[bn][19] = irq_vector;
+                    env->regbank[bn][19] = env->macl;
+                    env->regbank[bn][18] = env->gbr;
+                    env->regbank[bn][17] = env->pr;
+                    env->regbank[bn][16] = irq_vector;
                     bn++;
                     env->ibnr = (env->ibnr & ~0x000F) | bn;
                 } else {

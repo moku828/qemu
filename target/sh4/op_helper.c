@@ -539,9 +539,9 @@ void helper_resbank(CPUSH4State *env)
             // TODO bank underflow
             abort();
         }
-        env->pr = env->regbank[bn][18];
-        env->gbr = env->regbank[bn][17];
-        env->macl = env->regbank[bn][16];
+        env->pr = env->regbank[bn][17];
+        env->gbr = env->regbank[bn][18];
+        env->macl = env->regbank[bn][19];
         env->mach = env->regbank[bn][15];
         for (i = 14; i >= 0; i--) {
             env->gregs[i] = env->regbank[bn][i];
@@ -567,14 +567,7 @@ void helper_ldbank(CPUSH4State *env, uint32_t val)
     int bn, en;
     bn = (val >> 7) & 0x1ff;
     en = (val >> 2) & 0x1f;
-    switch (en) {
-    case 0 ... 15:
         env->gregs[0] = env->regbank[bn][en];
-        break;
-    case 16 ... 19:
-        env->gregs[0] = env->regbank[bn][16 + (19 - en)];
-        break;
-    }
 }
 
 void helper_stbank(CPUSH4State *env, uint32_t val)
@@ -582,12 +575,5 @@ void helper_stbank(CPUSH4State *env, uint32_t val)
     int bn, en;
     bn = (val >> 7) & 0x1ff;
     en = (val >> 2) & 0x1f;
-    switch (en) {
-    case 0 ... 15:
         env->regbank[bn][en] = env->gregs[0];
-        break;
-    case 16 ... 19:
-        env->regbank[bn][16 + (19 - en)] = env->gregs[0];
-        break;
-    }
 }
