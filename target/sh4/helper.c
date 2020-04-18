@@ -207,10 +207,10 @@ void superh_cpu_do_interrupt(CPUState *cs)
             env->pc = env->vbr + 0x400;
             break;
         case 0xf00:
-            env->pc = cpu_ldl_code(env, env->vbr + 0x044) - 2;
+            env->pc = cpu_ldl_code(env, env->vbr + 0x044);
             break;
         case 0xf10:
-            env->pc = cpu_ldl_code(env, env->vbr + 0x048) - 2;
+            env->pc = cpu_ldl_code(env, env->vbr + 0x048);
             break;
         case 0xf20:
             env->pc = cpu_ldl_code(env, env->vbr + 0x02c);
