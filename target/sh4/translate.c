@@ -209,9 +209,9 @@ static void gen_read_sr(TCGv dst)
     tcg_gen_shli_i32(t0, cpu_sr_m, SR_M);
     tcg_gen_or_i32(dst, dst, t0);
     tcg_gen_shli_i32(t0, cpu_sr_t, SR_T);
-    tcg_gen_or_i32(dst, cpu_sr, t0);
+    tcg_gen_or_i32(dst, dst, t0);
     tcg_gen_shli_i32(t0, cpu_sr_cs, SR_CS);
-    tcg_gen_or_i32(dst, cpu_sr, t0);
+    tcg_gen_or_i32(dst, dst, t0);
     tcg_gen_shli_i32(t0, cpu_sr_bo, SR_BO);
     tcg_gen_or_i32(dst, cpu_sr, t0);
     tcg_temp_free_i32(t0);
@@ -220,7 +220,7 @@ static void gen_read_sr(TCGv dst)
 static void gen_write_sr(TCGv src)
 {
     tcg_gen_andi_i32(cpu_sr, src,
-                     ~((1u << SR_Q) | (1u << SR_M) | (1u << SR_T) | (1u << SR_CS)));
+                     ~((1u << SR_Q) | (1u << SR_M) | (1u << SR_T) | (1u << SR_CS) | (1u << SR_BO)));
     tcg_gen_extract_i32(cpu_sr_q, src, SR_Q, 1);
     tcg_gen_extract_i32(cpu_sr_m, src, SR_M, 1);
     tcg_gen_extract_i32(cpu_sr_t, src, SR_T, 1);
