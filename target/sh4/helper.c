@@ -180,6 +180,12 @@ void superh_cpu_do_interrupt(CPUState *cs)
     env->ssr = cpu_read_sr(env);
     env->spc = env->pc;
     env->sgr = env->gregs[15];
+    if (env->features == SH_FEATURE_SH2A) {
+        env->gregs[15] -= 4;
+        cpu_stl_data(env, env->gregs[15], env->ssr);
+        env->gregs[15] -= 4;
+        cpu_stl_data(env, env->gregs[15], env->spc);
+    }
     env->sr |= (1u << SR_BL) | (1u << SR_MD) | (1u << SR_RB);
     if (env->features == SH_FEATURE_SH2A)
         env->sr &= ~((1u << SR_RB) | (1u << SR_BL) | (1u << SR_MD));

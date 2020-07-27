@@ -838,6 +838,16 @@ static void _decode_opc(DisasContext * ctx)
     case 0x002b:		/* rte */
 	CHECK_PRIVILEGED
 	CHECK_NOT_DELAY_SLOT
+    if (ctx->features & SH_FEATURE_SH2A) {
+        TCGv addr = tcg_temp_new();
+        tcg_gen_mov_i32(addr, REG(15));
+        tcg_gen_qemu_ld_i32(cpu_spc, addr, ctx->memidx, MO_TEUL);
+        tcg_gen_addi_i32(addr, addr, 4);
+        tcg_gen_qemu_ld_i32(cpu_ssr, addr, ctx->memidx, MO_TEUL);
+        tcg_gen_addi_i32(addr, addr, 4);
+        tcg_gen_mov_i32(REG(15), addr);
+        tcg_temp_free(addr);
+    }
         gen_write_sr(cpu_ssr);
 	tcg_gen_mov_i32(cpu_delayed_pc, cpu_spc);
         ctx->envflags |= DELAY_SLOT_RTE;
