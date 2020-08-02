@@ -3345,6 +3345,13 @@ SRST
     first module.
 ERST
 
+DEF("firmware", HAS_ARG, QEMU_OPTION_firmware, \
+    "-kernel file use 'file' as firmware\n", QEMU_ARCH_ALL)
+SRST
+``-firmware file``
+    Use file as firmware
+ERST
+
 DEF("dtb", HAS_ARG, QEMU_OPTION_dtb, \
     "-dtb    file    use 'file' as device tree image\n", QEMU_ARCH_ALL)
 SRST
