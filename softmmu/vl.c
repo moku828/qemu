@@ -3070,6 +3070,10 @@ void qemu_init(int argc, char **argv, char **envp)
                 qemu_opts_set(qemu_find_opts("machine"), 0, "append", optarg,
                               &error_abort);
                 break;
+            case QEMU_OPTION_firmware:
+                qemu_opts_set(qemu_find_opts("machine"), 0, "firmware", optarg,
+                              &error_abort);
+                break;
             case QEMU_OPTION_dtb:
                 qemu_opts_set(qemu_find_opts("machine"), 0, "dtb", optarg,
                               &error_abort);
