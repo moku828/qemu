@@ -1,0 +1,18 @@
+# -*- Mode: makefile -*-
+#
+# SuperH specific tweaks
+#
+
+.PHONY:aaaaa
+aaaaa:
+	sh-elf-gcc -c -Wa,-gstabs -o asmfunc.o $(SRC_PATH)/tests/tcg/sh4eb/system/asmfunc.s
+	sh-elf-gcc -c -g -O1 -m4 -o main.o $(SRC_PATH)/tests/tcg/sh4eb/system/main.c
+	sh-elf-objdump -S main.o
+	sh-elf-ld -T$(SRC_PATH)/tests/tcg/sh4eb/system/sh7750r_boot.ld -nostartfiles -o shix_bios.elf asmfunc.o main.o
+	sh-elf-objdump -d shix_bios.elf
+	sh-elf-objcopy -j .text -j .data -O binary shix_bios.elf shix_bios.bin
+	file shix_bios.elf
+	touch shix_linux_nand.bin
+	$(QEMU)
+
+EXTRA_RUNS+=aaaaa
