@@ -3,9 +3,14 @@
 # Only use spaces to indent your .yml configuration.
 # -----
 # You can specify a custom docker image from Docker Hub as your build environment.
-image: atlassian/default-image:2
+image: moku828/gcc-sh-elf:7.4.0
 
 pipelines:
+  default:
+    - step:
+        script:
+          - ./configure --target-list=sh4eb-softmmu --enable-debug-tcg --cross-cc-sh4eb=sh-elf-gcc
+          - make -s -j8
   branches:
     develop/2020.08_v5.0.0:
       - step:
