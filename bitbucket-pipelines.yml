@@ -1,14 +1,24 @@
-# This is a sample build configuration for C++ – Make.
-# Check our guides at https://confluence.atlassian.com/x/5Q4SMw for more examples.
+# This is a sample build configuration for Docker.
+# Check our guides at https://confluence.atlassian.com/x/O1toN for more examples.
 # Only use spaces to indent your .yml configuration.
 # -----
 # You can specify a custom docker image from Docker Hub as your build environment.
-image: moku828/gcc-sh-elf:7.4.0
+image: atlassian/default-image:2
 
 pipelines:
-  default:
-    - step:
-        script: # Modify the commands below to build your repository.
-          - ./configure --target-list=sh4eb-softmmu --enable-debug-tcg --cross-cc-sh4eb=sh-elf-gcc
-          - make
-#          - make test
+  branches:
+    develop/2020.08_v5.0.0:
+      - step:
+          deployment: staging
+          services:
+            - docker
+          script: # Modify the commands below to build your repository.
+            # Set $DOCKER_HUB_USERNAME and $DOCKER_HUB_PASSWORD as environment variables in repository settings
+            - export IMAGE_NAME=moku828/qemu-system-sh4eb:2020.08_v5.0.0
+
+            # build the Docker image (this will use the Dockerfile in the root of the repo)
+            - docker build -t $IMAGE_NAME .
+            # authenticate with the Docker Hub registry
+            - docker login --username $DOCKER_HUB_USERNAME --password $DOCKER_HUB_PASSWORD
+            # push the new Docker image to the Docker registry
+            - docker push $IMAGE_NAME
