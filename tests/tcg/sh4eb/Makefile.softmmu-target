@@ -3,16 +3,36 @@
 # SuperH specific tweaks
 #
 
-.PHONY:aaaaa
-aaaaa:
-	sh-elf-gcc -c -Wa,-gstabs -o asmfunc.o $(SRC_PATH)/tests/tcg/sh4eb/system/asmfunc.s
-	sh-elf-gcc -c -g -O1 -m4 -o main.o $(SRC_PATH)/tests/tcg/sh4eb/system/main.c
-	sh-elf-objdump -S main.o
-	sh-elf-ld -T$(SRC_PATH)/tests/tcg/sh4eb/system/sh7750r_boot.ld -nostartfiles -o shix_bios.elf asmfunc.o main.o
-	sh-elf-objdump -d shix_bios.elf
-	sh-elf-objcopy -j .text -j .data -O binary shix_bios.elf shix_bios.bin
-	file shix_bios.elf
-	touch shix_linux_nand.bin
-	$(QEMU)
+.SUFFIXES:
 
-EXTRA_RUNS+=aaaaa
+BINARIES = test_MOVI.bin test_MOVWI.bin
+
+%.o: ../sh4eb/system/%.s
+	sh-elf-gcc -c -Wa,-gstabs -o $@ $<
+
+%.elf: %.o
+	sh-elf-ld -T../sh4eb/system/sh7750r_boot.ld -nostartfiles -o $@ $<
+
+%.bin: %.elf
+	sh-elf-objcopy -j .text -j .data -O binary $< $@
+
+define RUN_TEST
+	$(eval binname := $1)
+	$(eval pyname := $(patsubst %.bin,%.py,$1))
+	@$(QEMU) -s -S -firmware $(binname) > /dev/null 2>&1 &
+	@python3 ../sh4eb/system/$(pyname)
+
+endef
+
+.PHONY:check-tcg-sh-isa
+check-tcg-sh-isa: $(BINARIES)
+	@touch shix_linux_nand.bin
+	$(foreach binary, $(BINARIES) ,$(call RUN_TEST,$(binary)))
+
+.PRECIOUS: %.o %.elf %.bin
+
+.PHONY:clean
+clean:
+	rm -rf $(BINARIES) $(patsubst %.bin,%.elf,$(BINARIES)) $(patsubst %.bin,%.o,$(BINARIES)) shix_linux_nand.bin
+
+EXTRA_RUNS+=check-tcg-sh-isa

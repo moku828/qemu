@@ -1,6 +1,6 @@
 OUTPUT_FORMAT("elf32-sh");
 OUTPUT_ARCH(sh4);
-ENTRY("start");
+ENTRY("test");
 /* SH7750R Available Memory */
 MEMORY
 {
