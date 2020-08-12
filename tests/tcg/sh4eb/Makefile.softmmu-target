@@ -7,6 +7,9 @@
 
 BINARIES = test_MOVI.bin test_MOVWI.bin
 
+%.py: ../sh4eb/system/%.s
+	python3 ../sh4eb/system/gen_test_py.py $(notdir $<) > $@
+
 %.o: ../sh4eb/system/%.s
 	sh-elf-gcc -c -Wa,-gstabs -o $@ $<
 
@@ -20,19 +23,20 @@ define RUN_TEST
 	$(eval binname := $1)
 	$(eval pyname := $(patsubst %.bin,%.py,$1))
 	@$(QEMU) -s -S -firmware $(binname) > /dev/null 2>&1 &
-	@python3 ../sh4eb/system/$(pyname)
+	@python3 $(pyname)
 
 endef
 
 .PHONY:check-tcg-sh-isa
-check-tcg-sh-isa: $(BINARIES)
+check-tcg-sh-isa: $(BINARIES) $(patsubst %.bin,%.py,$(BINARIES))
 	@touch shix_linux_nand.bin
+	@cp ../sh4eb/system/auto_test2.py ./
 	$(foreach binary, $(BINARIES) ,$(call RUN_TEST,$(binary)))
 
 .PRECIOUS: %.o %.elf %.bin
 
 .PHONY:clean
 clean:
-	rm -rf $(BINARIES) $(patsubst %.bin,%.elf,$(BINARIES)) $(patsubst %.bin,%.o,$(BINARIES)) shix_linux_nand.bin
+	rm -rf /qemu/tests/tcg/sh4eb-softmmu/*
 
 EXTRA_RUNS+=check-tcg-sh-isa
