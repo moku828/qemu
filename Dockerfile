@@ -1,8 +1,4 @@
-FROM moku828/gdb-sh-elf:8.1 AS builderbase
-RUN apt-get update && apt-get install -y --no-install-recommends python3-pip && rm -rf /var/lib/apt/lists/*
-RUN pip3 install -q python-gdb-mi pexpect
-
-FROM builderbase AS src
+FROM moku828/pexpect:4.8.0 AS src
 COPY . /qemu
 WORKDIR /qemu
 
