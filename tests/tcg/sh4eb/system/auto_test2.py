@@ -38,6 +38,17 @@ def inforeg():
 	expect(TerminationRecord)
 	return registers
 
+def x(address, size):
+	gdb.sendline("-data-read-memory " + address + " x " + size + " 1 1")
+	gdb.readline()
+	resultrecord = expect(ResultRecord)
+	memory = ""
+	for result in resultrecord.results:
+		if str(result.variable) == "memory":
+			memory = result.value.value.value[0].value.value[1].value.value.value[0].value.value
+	expect(TerminationRecord)
+	return memory
+
 def stepi():
 	gdb.sendline("-exec-step-instruction")
 	gdb.readline()
@@ -51,6 +62,11 @@ def expect_registers(expected_registers):
 	registers = inforeg()
 	for key in expected_registers:
 		assert expected_registers[key] == registers[key], pycolor.RED+'{0} is expected for {2} but actual is {1}, complete output is {3}'.format(expected_registers[key], registers[key], key, registers)+pycolor.END
+
+def expect_memories(expected_memories, size):
+	for key in expected_memories:
+		memory = x(key, size)
+		assert expected_memories[key] == memory, pycolor.RED+'{0} is expected at {2}[{3} byte(s)] but actual is {1}'.format(expected_memories[key], memory, key, size)+pycolor.END
 
 def setup(elf):
 	global gdb
