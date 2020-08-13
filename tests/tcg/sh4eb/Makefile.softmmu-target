@@ -5,7 +5,10 @@
 
 .SUFFIXES:
 
-BINARIES = test_MOVI.bin test_MOVWI.bin
+BINARIES = \
+	test_MOVI.bin \
+	test_MOVWI.bin \
+	
 
 %.py: ../sh4eb/system/%.s
 	python3 ../sh4eb/system/gen_test_py.py $(notdir $<) > $@
