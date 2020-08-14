@@ -41,6 +41,7 @@ BINARIES = \
 	test_MOVBL4.bin \
 	test_MOVWL4.bin \
 	test_MOVLL4.bin \
+	test_MOVA.bin \
 	# \
 	
 
