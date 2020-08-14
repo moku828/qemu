@@ -35,6 +35,12 @@ BINARIES = \
 	test_MOVBSG.bin \
 	test_MOVWSG.bin \
 	test_MOVLSG.bin \
+	test_MOVBS4.bin \
+	test_MOVWS4.bin \
+	test_MOVLS4.bin \
+	test_MOVBL4.bin \
+	test_MOVWL4.bin \
+	test_MOVLL4.bin \
 	# \
 	
 
