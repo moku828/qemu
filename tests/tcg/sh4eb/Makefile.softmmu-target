@@ -29,6 +29,12 @@ BINARIES = \
 	test_MOVWL0.bin \
 	test_MOVLL0.bin \
 	test_LDCGBR.bin \
+	test_MOVBLG.bin \
+	test_MOVWLG.bin \
+	test_MOVLLG.bin \
+	test_MOVBSG.bin \
+	test_MOVWSG.bin \
+	test_MOVLSG.bin \
 	# \
 	
 
