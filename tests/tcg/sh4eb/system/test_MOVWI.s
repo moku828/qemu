@@ -9,9 +9,9 @@ test:
 	/* t2.stepi() */
 	/* t2.expect_registers({"r0":"0x7fff"}) */
 
-	MOV.W   immdata_0x8000, R1
+	MOV.W   immdata_0x8000, R0
 	/* t2.stepi() */
-	/* t2.expect_registers({"r1":"0xffff8000"}) */
+	/* t2.expect_registers({"r0":"0xffff8000"}) */
 	
 	/* test_scenario end */
 immdata_0x7fff:

@@ -8,6 +8,27 @@
 BINARIES = \
 	test_MOVI.bin \
 	test_MOVWI.bin \
+	test_MOVLI.bin \
+	test_MOV.bin \
+	test_MOVBS.bin \
+	test_MOVWS.bin \
+	test_MOVLS.bin \
+	test_MOVBL.bin \
+	test_MOVWL.bin \
+	test_MOVLL.bin \
+	test_MOVBM.bin \
+	test_MOVWM.bin \
+	test_MOVLM.bin \
+	test_MOVBP.bin \
+	test_MOVWP.bin \
+	test_MOVLP.bin \
+	test_MOVBS0.bin \
+	test_MOVWS0.bin \
+	test_MOVLS0.bin \
+	test_MOVBL0.bin \
+	test_MOVWL0.bin \
+	test_MOVLL0.bin \
+	# \
 	
 
 %.py: ../sh4eb/system/%.s
