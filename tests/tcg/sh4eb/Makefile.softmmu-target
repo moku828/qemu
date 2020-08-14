@@ -45,7 +45,7 @@ BINARIES = \
 	# \
 	
 
-%.py: ../sh4eb/system/%.s
+%.py: ../sh4eb/system/%.s ../sh4eb/system/test_INST.py.template
 	python3 ../sh4eb/system/gen_test_py.py $(notdir $<) > $@
 
 %.o: ../sh4eb/system/%.s
