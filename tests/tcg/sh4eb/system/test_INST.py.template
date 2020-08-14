@@ -23,6 +23,11 @@ def main():
 		print(pyscript+" ["+t2.pycolor.RED+"FAILED"+t2.pycolor.END+"]")
 		print(e)
 
+	except Exception as e:
+		print(pyscript+" ["+t2.pycolor.RED+"FATAL"+t2.pycolor.END+"]")
+		print(type(e))
+		print(e)
+
 	finally:
 		t2.teardown()
 		sys.exit(result)
