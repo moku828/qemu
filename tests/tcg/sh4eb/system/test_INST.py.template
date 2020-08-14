@@ -10,7 +10,7 @@ $test_scenario_content
 def main():
 	global elf
 	pyscript = sys.argv[0]
-	result = -1
+	result = 1
 	try:
 		t2.setup(elf)
 
@@ -22,6 +22,11 @@ def main():
 	except AssertionError as e:
 		print(pyscript+" ["+t2.pycolor.RED+"FAILED"+t2.pycolor.END+"]")
 		print(e)
+
+	except pexpect.exceptions.TIMEOUT as e:
+		print(pyscript+" ["+t2.pycolor.RED+"TIMEOUT"+t2.pycolor.END+"]")
+		print(e)
+		result = 0
 
 	except Exception as e:
 		print(pyscript+" ["+t2.pycolor.RED+"FATAL"+t2.pycolor.END+"]")
