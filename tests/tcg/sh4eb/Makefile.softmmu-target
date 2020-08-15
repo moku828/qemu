@@ -6,6 +6,8 @@
 .SUFFIXES:
 
 BINARIES = \
+	test_NOP.bin \
+	test_BRA.bin \
 	test_MOVI.bin \
 	test_MOVWI.bin \
 	test_MOVLI.bin \
