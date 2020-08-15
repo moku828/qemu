@@ -3,24 +3,24 @@
 .section .text, "ax"
 
 test:
+	BRA     branch_target_forward
+	NOP
+	
+branch_target_backward:
+	BRA     exit
+	NOP
+	
+branch_target_forward:
+	BRA     branch_target_backward
+	NOP
+	
 	/* test_scenario start */
-	
-	BRA     branch_target
-	/* t2.stepi() */
-	
-	NOP
-	/* t2.stepi() */
+	/* t2.stepi() # BRA     branch_target_forward */
+	/* t2.stepi() # NOP */
 	/* t2.expect_registers({"pc":"0xa0000008"}) */
-	
-	NOP
-	
-	NOP
-	
-branch_target:	
-	NOP
-	
-	NOP
-	
+	/* t2.stepi() # BRA     branch_target_backward */
+	/* t2.stepi() # NOP */
+	/* t2.expect_registers({"pc":"0xa0000004"}) */
 	/* test_scenario end */
 exit:
 	BRA     exit
