@@ -10,3 +10,6 @@ test:
 	/* t2.expect_registers({"pc":"0xa0000002"}) */
 	
 	/* test_scenario end */
+exit:
+	BRA     exit
+	NOP

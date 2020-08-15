@@ -22,3 +22,6 @@ branch_target:
 	NOP
 	
 	/* test_scenario end */
+exit:
+	BRA     exit
+	NOP

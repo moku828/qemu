@@ -32,6 +32,9 @@ test:
 	/* t2.expect_memories({"0x0c000004":"0x8000"}, "2") */
 	
 	/* test_scenario end */
+exit:
+	BRA     exit
+	NOP
 immdata_0x7fff:
 	.word   0x7FFF
 immdata_0x8000:
