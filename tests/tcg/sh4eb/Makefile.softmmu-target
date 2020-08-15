@@ -46,6 +46,9 @@ BINARIES = \
 	test_MOVA.bin \
 	test_SETT.bin \
 	test_MOVT.bin \
+	test_SWAPB.bin \
+	test_SWAPW.bin \
+	test_XTRCT.bin \
 	# \
 	
 
