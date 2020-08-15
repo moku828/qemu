@@ -13,3 +13,6 @@ test:
 	/* t2.expect_registers({"gbr":"0x7f"}) */
 	
 	/* test_scenario end */
+exit:
+	BRA     exit
+	NOP

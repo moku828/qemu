@@ -38,6 +38,9 @@ test:
 	/* t2.expect_registers({"r0":"0xffff8000"}) */
 	
 	/* test_scenario end */
+exit:
+	BRA     exit
+	NOP
 immdata_0x7fff:
 	.word   0x7FFF
 immdata_0x8000:

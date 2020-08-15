@@ -32,6 +32,9 @@ test:
 	/* t2.expect_registers({"r2":"0xffffff80", "r1":"0xc000001"}) */
 	
 	/* test_scenario end */
+exit:
+	BRA     exit
+	NOP
 	.align  4
 immdata_0x0c000000:
 	.long   0x0C000000

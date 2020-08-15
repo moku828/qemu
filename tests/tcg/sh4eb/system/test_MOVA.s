@@ -14,5 +14,7 @@ test:
 	/* t2.expect_registers({"r0":"0xa0000008"}) */
 	
 	/* test_scenario end */
-	.space  4
+exit:
+	BRA     exit
+	NOP
 	.long   0x7FFFFFFF
