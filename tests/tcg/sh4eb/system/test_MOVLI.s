@@ -7,11 +7,11 @@ test:
 	
 	MOV.L   immdata_0x7fffffff, R0
 	/* t2.stepi() */
-	/* t2.expect_registers({"r0":"0x7fffffff"}) */
+	/* t2.expect_registers({"r0":"0x7fffffff","pc":"0xa0000002"}) */
 	
 	MOV.L   immdata_0x7fffffff, R0
 	/* t2.stepi() */
-	/* t2.expect_registers({"r0":"0x7fffffff"}) */
+	/* t2.expect_registers({"r0":"0x7fffffff","pc":"0xa0000004"}) */
 	
 	/* test_scenario end */
 exit:

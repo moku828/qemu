@@ -19,7 +19,7 @@ test:
 	
 	MOV.B   @(4, R1), R0
 	/* t2.stepi() */
-	/* t2.expect_registers({"r0":"0x7f"}) */
+	/* t2.expect_registers({"r0":"0x7f","pc":"0xa000000a"}) */
 	
 	MOV     #0x80, R0
 	/* t2.stepi() */
@@ -35,7 +35,7 @@ test:
 	
 	MOV.B   @(4, R1), R0
 	/* t2.stepi() */
-	/* t2.expect_registers({"r0":"0xffffff80"}) */
+	/* t2.expect_registers({"r0":"0xffffff80","pc":"0xa0000014"}) */
 	
 	/* test_scenario end */
 exit:

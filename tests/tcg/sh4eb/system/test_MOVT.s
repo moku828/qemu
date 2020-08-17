@@ -10,7 +10,7 @@ test:
 	
 	MOVT    R0
 	/* t2.stepi() */
-	/* t2.expect_registers({"r0":"0x1"}) */
+	/* t2.expect_registers({"r0":"0x1","pc":"0xa0000004"}) */
 	
 	/* test_scenario end */
 exit:

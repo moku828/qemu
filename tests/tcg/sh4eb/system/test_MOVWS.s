@@ -14,6 +14,7 @@ test:
 	MOV.W   R0, @R1
 	/* t2.stepi() */
 	/* t2.expect_memories({"0x0c000000":"0x7fff"}, "2") */
+	/* t2.expect_registers({"pc":"0xa0000006"}) */
 	
 	MOV.W   immdata_0x8000, R0
 	/* t2.stepi() */
@@ -24,6 +25,7 @@ test:
 	MOV.W   R0, @R1
 	/* t2.stepi() */
 	/* t2.expect_memories({"0x0c000000":"0x8000"}, "2") */
+	/* t2.expect_registers({"pc":"0xa000000c"}) */
 	
 	/* test_scenario end */
 exit:

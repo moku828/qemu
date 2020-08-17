@@ -10,7 +10,7 @@ test:
 	
 	SWAP.B  R0, R1
 	/* t2.stepi() */
-	/* t2.expect_registers({"r1":"0x1236745"}) */
+	/* t2.expect_registers({"r1":"0x1236745","pc":"0xa0000004"}) */
 	
 	/* test_scenario end */
 exit:
