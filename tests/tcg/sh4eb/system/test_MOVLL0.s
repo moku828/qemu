@@ -22,7 +22,7 @@ test:
 	
 	MOV.L   @(R0,R1), R3
 	/* t2.stepi() */
-	/* t2.expect_registers({"r3":"0x7fffffff"}) */
+	/* t2.expect_registers({"r3":"0x7fffffff","pc":"0xa000000c"}) */
 	
 	/* test_scenario end */
 exit:

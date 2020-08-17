@@ -22,7 +22,7 @@ test:
 	
 	MOV.W   @(4, GBR), R0
 	/* t2.stepi() */
-	/* t2.expect_registers({"r0":"0x7fff"}) */
+	/* t2.expect_registers({"r0":"0x7fff","pc":"0xa000000c"}) */
 	
 	MOV.W   immdata_0x8000, R0
 	/* t2.stepi() */
@@ -41,7 +41,7 @@ test:
 	
 	MOV.W   @(4, GBR), R0
 	/* t2.stepi() */
-	/* t2.expect_registers({"r0":"0xffff8000"}) */
+	/* t2.expect_registers({"r0":"0xffff8000","pc":"0xa0000018"}) */
 	
 	/* test_scenario end */
 exit:

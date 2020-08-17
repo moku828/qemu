@@ -10,14 +10,14 @@ test:
 	
 	MOV     R0, R1
 	/* t2.stepi() */
-	/* t2.expect_registers({"r1":"0x7f"}) */
+	/* t2.expect_registers({"r1":"0x7f","pc":"0xa0000004"}) */
 	
 	MOV     #0x80, R0
 	/* t2.stepi() */
 	
 	MOV     R0, R1
 	/* t2.stepi() */
-	/* t2.expect_registers({"r1":"0xffffff80"}) */
+	/* t2.expect_registers({"r1":"0xffffff80","pc":"0xa0000008"}) */
 	
 	MOV.W   immdata_0x7fff, R0
 	/* t2.stepi() */

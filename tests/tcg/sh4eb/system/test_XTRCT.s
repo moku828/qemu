@@ -13,7 +13,7 @@ test:
 	
 	XTRCT   R0, R1
 	/* t2.stepi() */
-	/* t2.expect_registers({"r1":"0x456789ab"}) */
+	/* t2.expect_registers({"r1":"0x456789ab","pc":"0xa0000006"}) */
 	
 	/* test_scenario end */
 exit:

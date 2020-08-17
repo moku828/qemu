@@ -16,7 +16,7 @@ test:
 	
 	MOV.B   @R1+, R2
 	/* t2.stepi() */
-	/* t2.expect_registers({"r2":"0x7f", "r1":"0xc000001"}) */
+	/* t2.expect_registers({"r2":"0x7f", "r1":"0xc000001","pc":"0xa0000008"}) */
 	
 	MOV     #0x80, R0
 	/* t2.stepi() */
@@ -29,7 +29,7 @@ test:
 	
 	MOV.B   @R1+, R2
 	/* t2.stepi() */
-	/* t2.expect_registers({"r2":"0xffffff80", "r1":"0xc000001"}) */
+	/* t2.expect_registers({"r2":"0xffffff80", "r1":"0xc000001","pc":"0xa0000010"}) */
 	
 	/* test_scenario end */
 exit:

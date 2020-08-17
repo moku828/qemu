@@ -13,7 +13,7 @@ test:
 	
 	MOV.L   R0, @-R1
 	/* t2.stepi() */
-	/* t2.expect_registers({"r1":"0xc000000"}) */
+	/* t2.expect_registers({"r1":"0xc000000","pc":"0xa0000006"}) */
 	/* t2.expect_memories({"0x0c000000":"0x7fffffff"}, "4") */
 	
 	/* test_scenario end */
