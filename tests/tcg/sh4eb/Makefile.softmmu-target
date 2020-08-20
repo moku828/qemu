@@ -49,6 +49,11 @@ BINARIES = \
 	test_SWAPB.bin \
 	test_SWAPW.bin \
 	test_XTRCT.bin \
+	test_ADD.bin \
+	test_ADDI.bin \
+	test_CLRT.bin \
+	test_ADDC.bin \
+	test_ADDV.bin \
 	# \
 	
 
