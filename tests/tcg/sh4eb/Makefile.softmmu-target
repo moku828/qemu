@@ -54,6 +54,15 @@ BINARIES = \
 	test_CLRT.bin \
 	test_ADDC.bin \
 	test_ADDV.bin \
+	test_CMPEQ.bin \
+	test_CMPGE.bin \
+	test_CMPGT.bin \
+	test_CMPHI.bin \
+	test_CMPHS.bin \
+	test_CMPPL.bin \
+	test_CMPPZ.bin \
+	test_CMPSTR.bin \
+	test_CMPIM.bin \
 	# \
 	
 
