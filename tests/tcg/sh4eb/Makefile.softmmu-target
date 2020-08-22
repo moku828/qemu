@@ -63,6 +63,18 @@ BINARIES = \
 	test_CMPPZ.bin \
 	test_CMPSTR.bin \
 	test_CMPIM.bin \
+	test_LDCSR.bin \
+	test_DIV0S.bin \
+	test_DIV0U.bin \
+	test_ROTCL.bin \
+	test_DIV1.bin \
+	test_DMULS.bin \
+	test_DMULU.bin \
+	test_DT.bin \
+	test_EXTSB.bin \
+	test_EXTSW.bin \
+	test_EXTUB.bin \
+	test_EXTUW.bin \
 	# \
 	
 
