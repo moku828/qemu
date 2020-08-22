@@ -7,7 +7,7 @@ def gen_test_scenario_content_from_asm(asmfile):
 			in_test_scenario = False
 		if in_test_scenario:
 			if (('/*' in line) and ('*/' in line)):
-				s = s + "\t" + line.replace('/*', '').replace('*/', '').strip() + "\n"
+				s = s + line.replace('/* ', '').replace(' */', '')
 			elif (len(line.strip()) > 0):
 				s = s + "\t" + '# ' + line.strip() + "\n"
 			else:
