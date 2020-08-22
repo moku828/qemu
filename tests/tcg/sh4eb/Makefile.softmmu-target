@@ -68,6 +68,8 @@ BINARIES = \
 	test_DIV0U.bin \
 	test_ROTCL.bin \
 	test_DIV1.bin \
+	test_DMULS.bin \
+	test_DMULU.bin \
 	# \
 	
 
