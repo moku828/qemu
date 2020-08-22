@@ -63,6 +63,11 @@ BINARIES = \
 	test_CMPPZ.bin \
 	test_CMPSTR.bin \
 	test_CMPIM.bin \
+	test_LDCSR.bin \
+	test_DIV0S.bin \
+	test_DIV0U.bin \
+	test_ROTCL.bin \
+	test_DIV1.bin \
 	# \
 	
 
