@@ -71,6 +71,10 @@ BINARIES = \
 	test_DMULS.bin \
 	test_DMULU.bin \
 	test_DT.bin \
+	test_EXTSB.bin \
+	test_EXTSW.bin \
+	test_EXTUB.bin \
+	test_EXTUW.bin \
 	# \
 	
 
