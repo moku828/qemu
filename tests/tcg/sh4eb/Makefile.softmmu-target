@@ -75,6 +75,11 @@ BINARIES = \
 	test_EXTSW.bin \
 	test_EXTUB.bin \
 	test_EXTUW.bin \
+	test_LDSMACH.bin \
+	test_LDSMACL.bin \
+	test_CLRMAC.bin \
+	test_MACL.bin \
+	test_MACW.bin \
 	# \
 	
 
