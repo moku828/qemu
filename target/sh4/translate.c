@@ -836,9 +836,9 @@ static void _decode_opc(DisasContext * ctx)
 	{
 	    TCGv arg0, arg1;
 	    arg0 = tcg_temp_new();
-            tcg_gen_qemu_ld_i32(arg0, REG(B7_4), ctx->memidx, MO_TESL);
+            tcg_gen_qemu_ld_i32(arg0, REG(B7_4), ctx->memidx, MO_TESW);
 	    arg1 = tcg_temp_new();
-            tcg_gen_qemu_ld_i32(arg1, REG(B11_8), ctx->memidx, MO_TESL);
+            tcg_gen_qemu_ld_i32(arg1, REG(B11_8), ctx->memidx, MO_TESW);
             gen_helper_macw(cpu_env, arg0, arg1);
 	    tcg_temp_free(arg1);
 	    tcg_temp_free(arg0);
