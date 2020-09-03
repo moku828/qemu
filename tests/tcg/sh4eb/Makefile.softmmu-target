@@ -80,6 +80,14 @@ BINARIES = \
 	test_CLRMAC.bin \
 	test_MACL.bin \
 	test_MACW.bin \
+	test_MULL.bin \
+	test_MULS.bin \
+	test_MULU.bin \
+	test_NEG.bin \
+	test_NEGC.bin \
+	test_SUB.bin \
+	test_SUBC.bin \
+	test_SUBV.bin \
 	# \
 	
 
